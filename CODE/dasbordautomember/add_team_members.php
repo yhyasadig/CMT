@@ -30,11 +30,7 @@ if (isset($_SESSION['user_id'])) {
             $message = "لا يوجد مشروع مرتبط بحسابك."; // رسالة في حالة عدم وجود مشروع
         }
     } catch (PDOException $e) {
-        // في حالة حدوث خطأ في الاتصال أو الاستعلام
         die("خطأ في الاتصال بقاعدة البيانات: " . $e->getMessage());
-    } catch (Exception $e) {
-        // في حالة حدوث خطأ عام مثل عدم وجود المشروع
-        die($e->getMessage());
     }
 } else {
     $message = "لا يوجد مشروع مرتبط بحسابك."; // رسالة في حالة عدم وجود مشروع
@@ -51,16 +47,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $team_members = $_POST['team_members'];  // أعضاء الفريق الذين تم اختيارهم
 
     try {
-        // إضافة الطلبة إلى المشروع
+        // إضافة الطلبة إلى المشروع باستخدام كلاس TeamMember
         foreach ($team_members as $member_id) {
-            $query_add_members = "UPDATE users SET project_id = :project_id WHERE user_id = :user_id";
-            $stmt_add_members = $connection->prepare($query_add_members);
-            $stmt_add_members->bindParam(':project_id', $project['project_id'], PDO::PARAM_INT);
-            $stmt_add_members->bindParam(':user_id', $member_id, PDO::PARAM_INT);
-            $stmt_add_members->execute();
+            $teamMember = new TeamMember($db, $member_id, $project['project_id'], 'student');
+            if ($teamMember->addToProject()) {
+                $message = "تم إضافة الأعضاء للمشروع بنجاح!";
+            } else {
+                $message = "حدث خطأ في إضافة الأعضاء للمشروع.";
+            }
         }
-
-        $message = "تم إضافة الأعضاء للمشروع بنجاح!";
     } catch (PDOException $e) {
         $message = "خطأ في استعلام إضافة الأعضاء: " . $e->getMessage();
     }
@@ -165,7 +160,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <h2>لوحة تحكم قائد الفريق</h2>
         <a href="student_dashboard.php">الصفحة الرئيسية</a>
         <a href="project_details.php">تفاصيل المشروع</a>
-     
     </div>
 
     <!-- محتوى الصفحة الرئيسية -->
