@@ -161,6 +161,8 @@ if (isset($_SESSION['user_id'])) {
             <li><a href="add_team_members.php">إضافة أعضاء الفريق</a></li>
             <!-- زر المشروع الخاص بي -->
             <li><a href="project_dashboard.php">المشروع الخاص بي</a></li> <!-- يوجه إلى الصفحة الخاصة بالمشروع -->
+            <!-- زر إضافة مهام -->
+            <li><a href="dashboard_taskmanager.php">إضافة مهام</a></li> <!-- رابط صفحة إدارة المهام -->
         </ul>
     </div>
 
