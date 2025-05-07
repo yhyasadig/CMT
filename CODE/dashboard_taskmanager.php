@@ -1,5 +1,5 @@
 <?php
-// تضمين الاتصال بقاعدة البيانات والكلاس TaskManager
+// تضمين الاتصال بقاعدة البيانات وكلاسات FileManager و TaskManager و TeamMember
 include 'Database.php';
 include 'TaskManager.php';
 
@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_task'])) {
 // جلب المهام الخاصة بالمشروع
 $tasks = $taskManager->getTasksByProject(1); // هنا نستخدم ID مشروع ثابت على سبيل المثال
 
-// جلب المستخدمين المرتبطين بالمشروع
+// جلب المستخدمين المرتبطين بالمشروع عبر كلاس TeamMember
 $users = $taskManager->getUsersByProject(1);  // جلب أعضاء المشروع مع ID المشروع
 ?>
 
@@ -31,7 +31,6 @@ $users = $taskManager->getUsersByProject(1);  // جلب أعضاء المشرو�
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة التحكم لإدارة المهام</title>
     <style>
-        /* التنسيق كما في الكود السابق */
         body {
             font-family: Arial, sans-serif;
             background-color: #f9f9f9;
@@ -167,6 +166,7 @@ $users = $taskManager->getUsersByProject(1);  // جلب أعضاء المشرو�
         <table>
             <tr>
                 <th>العنوان</th>
+                <th>المكلف بالمهمة</th>
                 <th>التاريخ النهائي</th>
                 <th>الحالة</th>
                 <th>الإجراءات</th>
@@ -174,6 +174,18 @@ $users = $taskManager->getUsersByProject(1);  // جلب أعضاء المشرو�
             <?php foreach ($tasks as $task): ?>
             <tr>
                 <td><?php echo $task['title']; ?></td>
+                <td>
+                    <?php
+                    // جلب اسم المستخدم المكلف بالمهمة
+                    $assignedTo = $task['assigned_to'];
+                    $query = "SELECT name FROM users WHERE user_id = :assigned_to";
+                    $stmt = $connection->prepare($query);
+                    $stmt->bindParam(':assigned_to', $assignedTo);
+                    $stmt->execute();
+                    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                    echo $user['name'];
+                    ?>
+                </td>
                 <td><?php echo $task['due_date']; ?></td>
                 <td><?php echo $task['status']; ?></td>
                 <td>

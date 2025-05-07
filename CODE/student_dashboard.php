@@ -68,6 +68,8 @@ $student = $stmt->fetch(PDO::FETCH_ASSOC);
         <a href="student_dashboard.php">الصفحة الرئيسية</a>
         <a href="student_details.php">تفاصيل الطالب</a>
         <a href="project_details.php">تفاصيل المشروع</a>
+        <!-- زر المهام لربط صفحة رفع الملفات -->
+        <a href="dashboard_file.php">المهام</a>
     </div>
 
     <!-- المحتوى الرئيسي -->
