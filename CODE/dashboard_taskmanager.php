@@ -1,15 +1,20 @@
 <?php
-// تضمين الاتصال بقاعدة البيانات وكلاسات FileManager و TaskManager و TeamMember
+// بدء الجلسة
+session_start();
+
+// تضمين الاتصال بقاعدة البيانات وكلاسات TaskManager
 include 'Database.php';
 include 'TaskManager.php';
 
 // إنشاء كائن من الاتصال بقاعدة البيانات
 $db = new DatabaseConnection();
-$taskManager = new TaskManager($db->getConnection());
+$taskManager = new TaskManager($db->getConnection());  // استخدم الاتصال من الكائن $db
+
+// التحقق من وجود `project_id` في الجلسة
+$projectId = $_SESSION['project_id'];  // استرجاع `project_id` من الجلسة
 
 // إذا تم إرسال البيانات من النموذج، إضافة المهمة
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_task'])) {
-    $projectId = $_POST['project_id'];
     $title = $_POST['task_title'];
     $description = $_POST['task_description'];
     $assignedTo = $_POST['assigned_to'];
@@ -18,10 +23,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_task'])) {
 }
 
 // جلب المهام الخاصة بالمشروع
-$tasks = $taskManager->getTasksByProject(1); // هنا نستخدم ID مشروع ثابت على سبيل المثال
+$tasks = $taskManager->getTasksByProject($projectId); // استخدام `project_id` من الجلسة
 
-// جلب المستخدمين المرتبطين بالمشروع عبر كلاس TeamMember
-$users = $taskManager->getUsersByProject(1);  // جلب أعضاء المشروع مع ID المشروع
+// جلب المستخدمين المرتبطين بنفس `project_id` و `role = 'student'` أو `role = 'automember'` في الجلسة
+$users = $taskManager->getUsersByProject($projectId);  // جلب المستخدمين بناءً على `project_id`
 ?>
 
 <!DOCTYPE html>
@@ -31,6 +36,7 @@ $users = $taskManager->getUsersByProject(1);  // جلب أعضاء المشرو�
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة التحكم لإدارة المهام</title>
     <style>
+        /* نفس الـ CSS السابق */
         body {
             font-family: Arial, sans-serif;
             background-color: #f9f9f9;
@@ -157,7 +163,7 @@ $users = $taskManager->getUsersByProject(1);  // جلب أعضاء المشرو�
             <label for="due_date">تاريخ التسليم:</label>
             <input type="date" id="due_date" name="due_date" required>
             
-            <input type="hidden" name="project_id" value="1"> <!-- ID المشروع ثابت هنا -->
+            <input type="hidden" name="project_id" value="<?php echo $projectId; ?>"> <!-- ID المشروع من الجلسة -->
             <button type="submit" name="add_task">إضافة المهمة</button>
         </form>
 
@@ -179,7 +185,7 @@ $users = $taskManager->getUsersByProject(1);  // جلب أعضاء المشرو�
                     // جلب اسم المستخدم المكلف بالمهمة
                     $assignedTo = $task['assigned_to'];
                     $query = "SELECT name FROM users WHERE user_id = :assigned_to";
-                    $stmt = $connection->prepare($query);
+                    $stmt = $db->getConnection()->prepare($query);  // استخدام الكائن $db للحصول على الاتصال
                     $stmt->bindParam(':assigned_to', $assignedTo);
                     $stmt->execute();
                     $user = $stmt->fetch(PDO::FETCH_ASSOC);

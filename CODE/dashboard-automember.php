@@ -1,3 +1,4 @@
+
 <?php
 // بدء الجلسة
 session_start();
@@ -28,6 +29,10 @@ if (isset($_SESSION['user_id'])) {
         // التحقق من وجود المشروع
         if (!$project) {
             $message = "لا يوجد مشروع مرتبط بحسابك."; // رسالة في حالة عدم وجود مشروع
+        } else {
+            // إذا تم العثور على المشروع، نقوم بتخزين project_id و user_id في الجلسة
+            $_SESSION['project_id'] = $project['project_id'];  // تخزين project_id في الجلسة
+            $_SESSION['user_id'] = $user_id;  // تخزين user_id في الجلسة
         }
     } catch (PDOException $e) {
         // في حالة حدوث خطأ في الاتصال أو الاستعلام
@@ -141,8 +146,7 @@ if (isset($_SESSION['user_id'])) {
             font-size: 18px;
             margin-top: 20px;
         }
-
-        .error-message {
+.error-message {
             color: red;
             text-align: center;
             font-size: 18px;
@@ -169,19 +173,3 @@ if (isset($_SESSION['user_id'])) {
     <!-- محتوى الصفحة الرئيسية -->
     <div class="main-content">
         <h2>مرحبًا بك في لوحة تحكم قائد الفريق</h2>
-
-        <!-- عرض رسالة في حالة عدم وجود مشروع -->
-        <?php if (isset($message)): ?>
-            <p class="error-message"><?php echo $message; ?></p>
-            <h3>لا يوجد مشروع مرتبط بحسابك</h3>
-            <p>يرجى التأكد من أن قائد الفريق قد أضافك للمشروع.</p>
-        <?php endif; ?>
-
-        <!-- إذا كان المشروع موجودًا، نعرض تفاصيله -->
-        <?php if (isset($project)): ?>
-            <p class="message">تم العثور على مشروعك: <strong><?php echo $project['name']; ?></strong></p>
-        <?php endif; ?>
-    </div>
-
-</body>
-</html>

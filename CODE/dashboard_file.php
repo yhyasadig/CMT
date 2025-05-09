@@ -1,9 +1,17 @@
 <?php
+session_start();  // يجب أن تكون هذه السطر في بداية الملف
+
 // تضمين الاتصال بقاعدة البيانات وكلاسات FileManager و TaskManager و Comment
 include 'Database.php';
 include 'FileManager.php';
 include 'TaskManager.php';
 include 'Comment.php'; // تضمين كلاس التعليقات
+
+// التحقق إذا كان المستخدم مسجلاً دخوله
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");  // إعادة التوجيه إلى صفحة تسجيل الدخول إذا لم يكن المستخدم مسجلاً دخوله
+    exit();
+}
 
 // إنشاء كائن من الاتصال بقاعدة البيانات
 $db = new DatabaseConnection();
@@ -16,13 +24,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['task_file'])) {
     $file = $_FILES['task_file'];  // ملف المهمة
     $uploadedBy = $_SESSION['user_id'];  // معرف المستخدم الذي رفع الملف (يجب أن يكون موجود في الجلسة)
 
-    // رفع الملف عبر كلاس FileManager
-    $result = $fileManager->uploadTaskFile($taskId, $file, $uploadedBy);
+    // التحقق إذا كان المستخدم هو من يرفع الملف للمهمة الخاصة به
+    $task = $taskManager->getTaskById($taskId);  // جلب المهمة باستخدام ID المهمة
+    if ($task && $task['assigned_to'] == $uploadedBy) {
+        // رفع الملف عبر كلاس FileManager
+        $result = $fileManager->uploadTaskFile($taskId, $file, $uploadedBy);
 
-    if ($result === true) {
-        echo "<div class='message'>تم رفع الملف بنجاح!</div>";
+        if ($result === true) {
+            echo "<div class='message'>تم رفع الملف بنجاح!</div>";
+        } else {
+            echo "<div class='error-message'>حدث خطأ في رفع الملف: " . $result . "</div>";
+        }
     } else {
-        echo "<div class='error-message'>حدث خطأ في رفع الملف: " . $result . "</div>";
+        echo "<div class='error-message'>لا يمكنك رفع الملف لمهمة لا تخصك.</div>";
     }
 }
 
@@ -32,20 +46,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['comment_text'])) {
     $commentText = $_POST['comment_text'];  // نص التعليق
     $userId = $_SESSION['user_id'];  // معرف المستخدم الذي يضيف التعليق
 
-    // إنشاء كائن من كلاس Comment
-    $comment = new Comment(null, $taskId, $userId, $commentText);
+    // التحقق إذا كان المستخدم هو المعني بالمهمة
+    $task = $taskManager->getTaskById($taskId);  // جلب المهمة باستخدام ID المهمة
+    if ($task && $task['assigned_to'] == $userId) {
+        // إنشاء كائن من كلاس Comment
+        $comment = new Comment(null, $taskId, $userId, $commentText);
 
-    // إضافة التعليق إلى قاعدة البيانات
-    if ($comment->saveToDatabase($db)) {
-        echo "<div class='message'>تم إضافة التعليق بنجاح!</div>";
+        // إضافة التعليق إلى قاعدة البيانات
+        if ($comment->saveToDatabase($db)) {
+            echo "<div class='message'>تم إضافة التعليق بنجاح!</div>";
+        } else {
+            echo "<div class='error-message'>حدث خطأ في إضافة التعليق.</div>";
+        }
     } else {
-        echo "<div class='error-message'>حدث خطأ في إضافة التعليق.</div>";
+        echo "<div class='error-message'>لا يمكنك إضافة تعليق لمهمة لا تخصك.</div>";
     }
 }
 
-// جلب جميع المهام الخاصة بالمشروع
+// جلب المهام الخاصة بالمشروع بناءً على project_id فقط
 $projectId = 1;  // معرف المشروع (يمكن تغييره ديناميكيًا حسب المشروع المطلوب)
-$tasks = $taskManager->getTasksByProject($projectId);  // جلب المهام المرتبطة بالمشروع
+$userId = $_SESSION['user_id'];  // معرف المستخدم الذي تم تسجيل دخوله
+
+// جلب المهام الخاصة بالمشروع
+$tasks = $taskManager->getTasksByProject($projectId);  // جلب المهام الخاصة بالمشروع فقط
 ?>
 
 <!DOCTYPE html>
@@ -212,7 +235,7 @@ $tasks = $taskManager->getTasksByProject($projectId);  // جلب المهام ا
                 <div class="comment-section">
                     <?php
                     // استرجاع التعليقات المتعلقة بالمهمة
-                    $comments = Comment::getCommentsByTaskId($db, $task['task_id']);
+                    $comments = $taskManager->getCommentsByTask($task['task_id']);
                     foreach ($comments as $comment):
                     ?>
                         <div class="comment">
