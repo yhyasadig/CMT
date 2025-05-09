@@ -1,5 +1,4 @@
 <?php
-// بدء الجلسة
 session_start();
 
 // التحقق من أن المستخدم هو قائد الفريق
@@ -47,7 +46,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $team_members = $_POST['team_members'];  // أعضاء الفريق الذين تم اختيارهم
 
     try {
-        // إضافة الطلبة إلى المشروع باستخدام كلاس TeamMember
+        // استدعاء كلاس Project
+        $projectObj = new Project($db, $project['project_id']);
+        
+        // إضافة الأعضاء إلى المشروع باستخدام كلاس TeamMember
         foreach ($team_members as $member_id) {
             $teamMember = new TeamMember($db, $member_id, $project['project_id'], 'student');
             if ($teamMember->addToProject()) {
@@ -69,7 +71,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إضافة أعضاء الفريق للمشروع</title>
     <style>
-        /* إضافة تنسيق للسايد بار */
         .sidebar {
             width: 250px;
             height: 100%;

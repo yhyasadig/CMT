@@ -13,6 +13,14 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// جلب projectId من الجلسة (يجب تخزينه عند تسجيل دخول المستخدم أو تحديد المشروع المعين له)
+if (!isset($_SESSION['project_id'])) {
+    header("Location: select_project.php");  // توجيه المستخدم لاختيار مشروع إذا لم يكن projectId موجودًا في الجلسة
+    exit();
+}
+
+$projectId = $_SESSION['project_id'];  // الحصول على projectId من الجلسة
+
 // إنشاء كائن من الاتصال بقاعدة البيانات
 $db = new DatabaseConnection();
 $fileManager = new FileManager($db->getConnection());
@@ -64,7 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['comment_text'])) {
 }
 
 // جلب المهام الخاصة بالمشروع بناءً على project_id فقط
-$projectId = 1;  // معرف المشروع (يمكن تغييره ديناميكيًا حسب المشروع المطلوب)
 $userId = $_SESSION['user_id'];  // معرف المستخدم الذي تم تسجيل دخوله
 
 // جلب المهام الخاصة بالمشروع

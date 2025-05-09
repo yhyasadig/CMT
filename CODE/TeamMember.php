@@ -6,11 +6,26 @@ class TeamMember extends User {
     private $projectId;
     private $role;
 
-    public function __construct(DatabaseConnection $db, $userId, $name, $email, $password, $teamMemberId, $projectId, $role) {
-        parent::__construct($db); // استدعاء المُنشئ من كلاس User لضبط الاتصال
+    public function __construct(DatabaseConnection $db, $teamMemberId, $projectId, $role) {
+        parent::__construct($db);  // استدعاء المُنشئ من كلاس User لضبط الاتصال
         $this->teamMemberId = $teamMemberId;
         $this->projectId = $projectId;
         $this->role = $role;
+    }
+
+    // دالة لإضافة العضو إلى المشروع
+    public function addToProject() {
+        try {
+            // استعلام لإضافة العضو إلى الفريق في جدول team_members
+            $query = "INSERT INTO team_members (user_id, project_id, role) VALUES (:user_id, :project_id, :role)";
+            $stmt = $this->getConnection()->prepare($query);  // استخدام دالة getConnection() من User للوصول إلى الاتصال
+            $stmt->bindParam(':user_id', $this->teamMemberId);
+            $stmt->bindParam(':project_id', $this->projectId);
+            $stmt->bindParam(':role', $this->role);
+            return $stmt->execute();  // تنفيذ الاستعلام وإرجاع النتيجة (صواب أو خطأ)
+        } catch (PDOException $e) {
+            die("حدث خطأ أثناء إضافة العضو للمشروع: " . $e->getMessage());
+        }
     }
 
     // دالة لعرض المشروع المعين لهذا العضو
