@@ -1,31 +1,44 @@
 <?php
 class TaskManager {
-    private $db; // متغير لتخزين اتصال قاعدة البيانات
+    private $db; // اتصال قاعدة البيانات
 
-    // بناء الكلاس مع تمرير الاتصال بقاعدة البيانات
     public function __construct($db) {
         $this->db = $db;
     }
 
-    // إضافة مهمة جديدة
+    // ✅ تعديل: إضافة مهمة جديدة مع إشعار وربط notification_id بالمهمة
     public function addTask($projectId, $title, $description, $assignedTo, $dueDate) {
         try {
-            $query = "INSERT INTO tasks (project_id, title, description, assigned_to, due_date, status) 
-                      VALUES (:project_id, :title, :description, :assigned_to, :due_date, 'pending')";
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':project_id', $projectId);
-            $stmt->bindParam(':title', $title);
-            $stmt->bindParam(':description', $description);
-            $stmt->bindParam(':assigned_to', $assignedTo);
-            $stmt->bindParam(':due_date', $dueDate);
-            return $stmt->execute();
+            // 1. إرسال إشعار للمستخدم
+            $notificationMessage = "تم تعيين مهمة جديدة: " . $title;
+            $notificationQuery = "INSERT INTO notifications (user_id, message) VALUES (:user_id, :message)";
+            $stmt1 = $this->db->prepare($notificationQuery);
+            $stmt1->bindParam(':user_id', $assignedTo);
+            $stmt1->bindParam(':message', $notificationMessage);
+            $stmt1->execute();
+
+            // 2. الحصول على معرف الإشعار المضاف
+            $notificationId = $this->db->lastInsertId();
+
+            // 3. إدخال المهمة وربطها بالإشعار
+            $taskQuery = "INSERT INTO tasks (project_id, title, description, assigned_to, due_date, status, notification_id) 
+                          VALUES (:project_id, :title, :description, :assigned_to, :due_date, 'pending', :notification_id)";
+            $stmt2 = $this->db->prepare($taskQuery);
+            $stmt2->bindParam(':project_id', $projectId);
+            $stmt2->bindParam(':title', $title);
+            $stmt2->bindParam(':description', $description);
+            $stmt2->bindParam(':assigned_to', $assignedTo);
+            $stmt2->bindParam(':due_date', $dueDate);
+            $stmt2->bindParam(':notification_id', $notificationId);
+            return $stmt2->execute();
         } catch (Exception $e) {
-            echo "Error adding task: " . $e->getMessage();
+            echo "Error adding task with notification: " . $e->getMessage();
             return false;
         }
     }
 
-    // الحصول على جميع المهام المتعلقة بمشروع معين
+    // باقي الدوال كما هي بدون تغيير...
+
     public function getTasksByProject($projectId) {
         try {
             $query = "SELECT t.*, p.name AS project_name, p.description AS project_description
@@ -42,7 +55,6 @@ class TaskManager {
         }
     }
 
-    // جلب الأعضاء المرتبطين بالمشروع
     public function getUsersByProject($projectId) {
         try {
             $query = "SELECT * FROM users WHERE project_id = :project_id";
@@ -56,7 +68,6 @@ class TaskManager {
         }
     }
 
-    // الحصول على تفاصيل مهمة معينة بناءً على task_id
     public function getTaskById($taskId) {
         try {
             $query = "SELECT * FROM tasks WHERE task_id = :task_id";
@@ -70,7 +81,6 @@ class TaskManager {
         }
     }
 
-    // تحديث مهمة معينة بناءً على task_id
     public function updateTask($taskId, $title, $description, $assignedTo, $dueDate, $status) {
         try {
             $query = "UPDATE tasks SET title = :title, description = :description, assigned_to = :assigned_to, due_date = :due_date, status = :status WHERE task_id = :task_id";
@@ -88,7 +98,6 @@ class TaskManager {
         }
     }
 
-    // تحديث حالة المهمة (مثال: قيد التنفيذ أو مكتملة)
     public function updateTaskStatus($taskId, $status) {
         try {
             $query = "UPDATE tasks SET status = :status WHERE task_id = :task_id";
@@ -102,7 +111,6 @@ class TaskManager {
         }
     }
 
-    // حذف مهمة
     public function deleteTask($taskId) {
         try {
             $query = "DELETE FROM tasks WHERE task_id = :task_id";
@@ -115,7 +123,6 @@ class TaskManager {
         }
     }
 
-    // جلب الملفات المرتبطة بكل مهمة
     public function getFilesByTask($taskId) {
         try {
             $query = "SELECT * FROM files WHERE task_id = :task_id";
@@ -129,7 +136,6 @@ class TaskManager {
         }
     }
 
-    // جلب التعليقات المرتبطة بكل مهمة
     public function getCommentsByTask($taskId) {
         try {
             $query = "SELECT * FROM comments WHERE task_id = :task_id";
@@ -143,7 +149,6 @@ class TaskManager {
         }
     }
 
-    // إضافة تعليق إلى المهمة
     public function addComment($taskId, $userId, $commentText) {
         try {
             $query = "INSERT INTO comments (task_id, user_id, comment_text) VALUES (:task_id, :user_id, :comment_text)";
@@ -158,7 +163,6 @@ class TaskManager {
         }
     }
 
-    // إضافة ملف إلى المهمة
     public function addFile($taskId, $fileName, $uploadedBy) {
         try {
             $query = "INSERT INTO files (task_id, file_name, uploaded_by) VALUES (:task_id, :file_name, :uploaded_by)";

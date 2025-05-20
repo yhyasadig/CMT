@@ -36,7 +36,7 @@ class Notifications {
     // دالة لتحديث حالة الإشعار إلى "مقروء"
     public function markAsRead($notificationId) {
         try {
-            $query = "UPDATE notifications SET read_status = 1 WHERE notification_id = :notification_id";
+            $query = "UPDATE notifications SET is_read = 1 WHERE notification_id = :notification_id";
             $stmt = $this->connection->prepare($query);
             $stmt->bindParam(':notification_id', $notificationId, PDO::PARAM_INT);
             $stmt->execute();
