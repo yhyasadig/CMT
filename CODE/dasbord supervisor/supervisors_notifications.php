@@ -15,11 +15,10 @@ $connection = $db->getConnection();  // الحصول على الاتصال بق�
 
 // استعلام لجلب جميع الإشعارات مع الرسالة واسم المشروع
 $query = "
-    SELECT n.notification_id, n.message, n.created_at, 
-           p.name AS project_name, u.name AS sender_name
+    SELECT n.notification_id, n.message, n.created_at, n.is_read, p.name AS project_name, u.name AS sender_name
     FROM notifications n
-    LEFT JOIN users u ON n.user_id = u.user_id
-    LEFT JOIN projects p ON u.project_id = p.project_id
+    LEFT JOIN projects p ON n.project_id = p.project_id
+    LEFT JOIN users u ON n.sender_id = u.user_id
     ORDER BY n.created_at DESC
 ";
 $stmt = $connection->prepare($query);
@@ -40,6 +39,7 @@ $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
             margin: 0;
         }
 
+        /* تصميم السايد بار */
         .sidebar {
             position: fixed;
             left: 0;
@@ -64,6 +64,7 @@ $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
             background-color: #575757;
         }
 
+        /* محتوى الصفحة */
         .main-content {
             margin-left: 260px;
             padding: 20px;
@@ -118,7 +119,7 @@ $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="notification-box">
             <h3>الإشعارات:</h3>
             <?php
-            // التحقق إذا كانت هناك إشعارات
+            // التحقق إذا كانت هناك إشعارات للمشرف
             if (count($notifications) > 0) {
                 foreach ($notifications as $notification) {
                     echo '<div class="notification-item ' . ($notification['is_read'] == 0 ? 'unread' : '') . '">';
