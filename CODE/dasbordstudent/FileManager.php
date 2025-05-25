@@ -37,7 +37,8 @@ class FileManager {
     // إضافة تفاصيل الملف إلى قاعدة البيانات
     private function addFileToDatabase($taskId, $fileName, $filePath, $uploadedBy) {
         try {
-            $query = "INSERT INTO task_files (task_id, file_name, uploaded_by, file_path, upload_date) 
+            // تعديل الاستعلام ليتناسب مع اسم الجدول files
+            $query = "INSERT INTO files (task_id, file_name, uploaded_by, file_path, upload_date) 
                       VALUES (:task_id, :file_name, :uploaded_by, :file_path, NOW())";
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':task_id', $taskId);
@@ -53,7 +54,8 @@ class FileManager {
     // جلب الملفات المرتبطة بمهمة معينة
     public function getFilesByTask($taskId) {
         try {
-            $query = "SELECT * FROM task_files WHERE task_id = :task_id";
+            // تعديل الاستعلام ليتناسب مع اسم الجدول files
+            $query = "SELECT * FROM files WHERE task_id = :task_id";
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':task_id', $taskId);
             $stmt->execute();
@@ -68,7 +70,7 @@ class FileManager {
     public function deleteFile($fileId) {
         try {
             // جلب مسار الملف من قاعدة البيانات
-            $query = "SELECT file_path FROM task_files WHERE file_id = :file_id";
+            $query = "SELECT file_path FROM files WHERE file_id = :file_id";  // تعديل اسم الجدول إلى files
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':file_id', $fileId);
             $stmt->execute();
@@ -77,7 +79,7 @@ class FileManager {
             // التأكد من وجود الملف
             if ($file && unlink($file['file_path'])) {
                 // حذف السجل من قاعدة البيانات
-                $queryDelete = "DELETE FROM task_files WHERE file_id = :file_id";
+                $queryDelete = "DELETE FROM files WHERE file_id = :file_id";  // تعديل اسم الجدول إلى files
                 $stmtDelete = $this->db->prepare($queryDelete);
                 $stmtDelete->bindParam(':file_id', $fileId);
                 $stmtDelete->execute();

@@ -6,6 +6,7 @@ include 'Database.php';
 include 'FileManager.php';
 include 'TaskManager.php';
 include 'Comment.php'; // تضمين كلاس التعليقات
+include 'Rating.php';  // تضمين كلاس التقييم
 
 // التحقق إذا كان المستخدم مسجلاً دخوله
 if (!isset($_SESSION['user_id'])) {
@@ -71,11 +72,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['comment_text'])) {
     }
 }
 
+// التحقق إذا تم إرسال بحث عبر POST
+$searchTerm = '';
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['search_term'])) {
+    $searchTerm = $_POST['search_term'];
+}
+
 // جلب المهام الخاصة بالمشروع بناءً على project_id فقط
 $userId = $_SESSION['user_id'];  // معرف المستخدم الذي تم تسجيل دخوله
 
-// جلب المهام الخاصة بالمشروع
-$tasks = $taskManager->getTasksByProject($projectId);  // جلب المهام الخاصة بالمشروع فقط
+// جلب المهام الخاصة بالمشروع أو بناءً على البحث
+if ($searchTerm != '') {
+    $tasks = $taskManager->searchTasksByProjectAndTerm($projectId, $searchTerm);  // جلب المهام التي تطابق البحث
+} else {
+    $tasks = $taskManager->getTasksByProject($projectId);  // جلب المهام الخاصة بالمشروع فقط
+}
 ?>
 
 <!DOCTYPE html>
@@ -112,7 +123,7 @@ $tasks = $taskManager->getTasksByProject($projectId);  // جلب المهام ا
             color: #34495e;
         }
 
-        input[type="file"], input[type="hidden"], button, textarea {
+        input[type="file"], input[type="hidden"], button, textarea, input[type="text"] {
             width: 100%;
             padding: 12px;
             font-size: 14px;
@@ -159,15 +170,6 @@ $tasks = $taskManager->getTasksByProject($projectId);  // جلب المهام ا
             background-color: #f2f2f2;
         }
 
-        a {
-            color: #3498db;
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
         .message {
             color: #27ae60;
             font-size: 16px;
@@ -207,6 +209,13 @@ $tasks = $taskManager->getTasksByProject($projectId);  // جلب المهام ا
 <div class="container">
     <h1>رفع ملف المهمة</h1>
 
+    <!-- نموذج البحث -->
+    <form action="dashboard_file.php" method="POST">
+        <label for="search_term">البحث عن مهمة:</label>
+        <input type="text" id="search_term" name="search_term" value="<?php echo htmlspecialchars($searchTerm); ?>" placeholder="ابحث عن المهمة" required>
+        <button type="submit">بحث</button>
+    </form>
+
     <!-- عرض جميع المهام الخاصة بالمشروع -->
     <h2>قائمة المهام الخاصة بالمشروع</h2>
     <table>
@@ -216,6 +225,7 @@ $tasks = $taskManager->getTasksByProject($projectId);  // جلب المهام ا
             <th>الحالة</th>
             <th>رفع الملفات</th>
             <th>التعليقات</th>
+            <th>التقييمات</th> <!-- إضافة عمود للتقييمات -->
         </tr>
         <?php foreach ($tasks as $task): ?>
         <tr>
@@ -246,12 +256,28 @@ $tasks = $taskManager->getTasksByProject($projectId);  // جلب المهام ا
                     foreach ($comments as $comment):
                     ?>
                         <div class="comment">
-                            <div class="comment-user"><?php echo "المستخدم " . $comment['user_id']; ?></div>
+                            <div class="comment-user"><?php echo "المستخدم: " . $comment['user_name']; ?></div>
                             <div class="comment-text"><?php echo $comment['comment_text']; ?></div>
                             <div class="comment-timestamp"><?php echo $comment['timestamp']; ?></div>
                         </div>
                     <?php endforeach; ?>
                 </div>
+            </td>
+            <td>
+                <!-- عرض التقييمات المرتبطة بالمهمة -->
+                <?php
+                // استرجاع التقييمات المتعلقة بالمهمة
+                $ratings = Rating::getRatingsByTaskId($db->getConnection(), $task['task_id']);
+                foreach ($ratings as $rating):
+                    // استرجاع اسم المشرف
+                    $supervisorName = Rating::getSupervisorNameByTaskId($db->getConnection(), $task['task_id']);
+                ?>
+                    <div class="comment">
+                        <div class="comment-user"><?php echo "المشرف: " . htmlspecialchars($supervisorName); ?></div>
+                        <div class="comment-text">التقييم: <?php echo $rating['score']; ?>/100</div>
+                        <div class="comment-timestamp"><?php echo $rating['timestamp']; ?></div>
+                    </div>
+                <?php endforeach; ?>
             </td>
         </tr>
         <?php endforeach; ?>

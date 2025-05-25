@@ -10,21 +10,15 @@ if ($_SESSION['role'] != 'supervis') {
 
 // الاتصال بقاعدة البيانات
 include 'Database.php';  // تأكد من أنك تستخدم الملف المناسب للاتصال بقاعدة البيانات
+include 'Notifications.php';  // ربط كلاس الإشعارات
+
+// إنشاء الاتصال بقاعدة البيانات
 $db = new DatabaseConnection();
 $connection = $db->getConnection();  // الحصول على الاتصال بقاعدة البيانات
 
-// استعلام لجلب جميع الإشعارات مع الرسالة واسم المشروع
-$query = "
-    SELECT n.notification_id, n.message, n.created_at, 
-           p.name AS project_name, u.name AS sender_name
-    FROM notifications n
-    LEFT JOIN users u ON n.user_id = u.user_id
-    LEFT JOIN projects p ON u.project_id = p.project_id
-    ORDER BY n.created_at DESC
-";
-$stmt = $connection->prepare($query);
-$stmt->execute();
-$notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// استدعاء كلاس Notifications لجلب جميع الإشعارات
+$notificationObj = new Notifications($db); // إنشاء كائن من كلاس Notifications
+$notifications = $notificationObj->getAllNotifications(); // جلب الإشعارات لجميع المستخدمين
 ?>
 
 <!DOCTYPE html>
@@ -107,7 +101,6 @@ $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <a href="add_project.php">إضافة مشروع</a>
         <a href="projects_list.php">عرض المشاريع</a>
         <a href="projects_list.php">عرض التقارير</a>
-        <a href="project_dashboard.php" class="button">المشروع الخاص بي</a> <!-- زر المشروع الخاص بي -->
     </div>
 
     <!-- محتوى الصفحة -->
@@ -118,10 +111,12 @@ $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="notification-box">
             <h3>الإشعارات:</h3>
             <?php
-            // التحقق إذا كانت هناك إشعارات
+            // التحقق إذا كانت هناك إشعارات للمشرف
             if (count($notifications) > 0) {
                 foreach ($notifications as $notification) {
-                    echo '<div class="notification-item ' . ($notification['is_read'] == 0 ? 'unread' : '') . '">';
+                    // التحقق مما إذا كانت قيمة is_read موجودة في النتيجة
+                    $isReadClass = isset($notification['is_read']) && $notification['is_read'] == 0 ? 'unread' : '';
+                    echo '<div class="notification-item ' . $isReadClass . '">';
                     echo '<strong>' . htmlspecialchars($notification['message']) . '</strong><br>';
                     echo '<small>' . $notification['created_at'] . '</small>';
                     // عرض المشروع إذا كان موجوداً

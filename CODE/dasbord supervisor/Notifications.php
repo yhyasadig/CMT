@@ -23,7 +23,13 @@ class Notifications {
     // دالة لجلب إشعارات المستخدم (مقروءة وغير مقروءة)
     public function getNotifications($userId) {
         try {
-            $query = "SELECT * FROM notifications WHERE user_id = :user_id ORDER BY created_at DESC";
+            $query = "SELECT n.notification_id, n.message, n.created_at, n.is_read, 
+                             p.name AS project_name, u.name AS sender_name 
+                      FROM notifications n 
+                      LEFT JOIN users u ON n.user_id = u.user_id 
+                      LEFT JOIN projects p ON u.project_id = p.project_id 
+                      WHERE n.user_id = :user_id 
+                      ORDER BY n.created_at DESC";
             $stmt = $this->connection->prepare($query);
             $stmt->bindParam(':user_id', $userId);
             $stmt->execute();
