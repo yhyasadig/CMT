@@ -1,37 +1,29 @@
 <?php
-// بدء الجلسة
 session_start();
 
-// التأكد من أن المستخدم هو مشرف
-if ($_SESSION['role'] != 'supervis') {
-    header("Location: index.php");  // إعادة التوجيه إلى صفحة تسجيل الدخول إذا لم يكن مشرف
+//  التأكد من أن المستخدم مشرف
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'supervis') {
+    header("Location: index.php");
     exit();
 }
 
-// الاتصال بقاعدة البيانات
-include 'Database.php';  // تأكد من أنك تستخدم الملف المناسب للاتصال بقاعدة البيانات
-$db = new DatabaseConnection();
-$connection = $db->getConnection();  // الحصول على الاتصال بقاعدة البيانات
+//  استدعاء الملفات
+require_once 'Database.php';
+require_once 'Notifications.php';
 
-// استعلام لجلب جميع الإشعارات مع الرسالة واسم المشروع
-$query = "
-    SELECT n.notification_id, n.message, n.created_at, 
-           p.name AS project_name, u.name AS sender_name
-    FROM notifications n
-    LEFT JOIN users u ON n.user_id = u.user_id
-    LEFT JOIN projects p ON u.project_id = p.project_id
-    ORDER BY n.created_at DESC
-";
-$stmt = $connection->prepare($query);
-$stmt->execute();
-$notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// الاتصال بقاعدة البيانات وإنشاء كائن الإشعارات
+$db = new DatabaseConnection();
+$notificationsObj = new Notifications($db);
+
+//  جلب الإشعارات للمستخدم الحالي (المشرف)
+$userId = $_SESSION['user_id'];
+$notifications = $notificationsObj->getNotifications($userId);
 ?>
 
 <!DOCTYPE html>
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إشعارات المشرف</title>
     <style>
         body {
@@ -101,44 +93,40 @@ $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </head>
 <body>
 
-    <!-- سايد بار -->
-    <div class="sidebar">
-        <h2>لوحة تحكم المشرف</h2>
-        <a href="add_project.php">إضافة مشروع</a>
-        <a href="projects_list.php">عرض المشاريع</a>
-        <a href="dashboard_taskmanager.php">ادارة المهام </a>
-        <a href="supervisor_reports.php">عرض التقارير</a>
-        
-    </div>
+<!--  الشريط الجانبي -->
+<div class="sidebar">
+    <h2>لوحة تحكم المشرف</h2>
+    <a href="add_project.php">إضافة مشروع</a>
+    <a href="projects_list.php">عرض المشاريع</a>
+    <a href="dashboard_taskmanager.php">إدارة المهام</a>
+    <a href="supervisor_reports.php">عرض التقارير</a>
+    <a href="supervisor_notifications.php">الإشعارات</a>
+</div>
 
-    <!-- محتوى الصفحة -->
-    <div class="main-content">
-        <h1>مرحبًا في لوحة تحكم المشرف - الإشعارات</h1>
+<!--  المحتوى الرئيسي -->
+<div class="main-content">
+    <h1>مرحبًا بك - إشعاراتك</h1>
 
-        <!-- عرض الإشعارات -->
-        <div class="notification-box">
-            <h3>الإشعارات:</h3>
-            <?php
-            // التحقق إذا كانت هناك إشعارات
-            if (count($notifications) > 0) {
-                foreach ($notifications as $notification) {
-                    echo '<div class="notification-item ' . (isset($notification['is_read']) && $notification['is_read'] == 0 ? 'unread' : '') . '">';
-                    echo '<strong>' . htmlspecialchars($notification['message']) . '</strong><br>';
-                    echo '<small>' . $notification['created_at'] . '</small>';
-                    // عرض المشروع إذا كان موجوداً
-                    if ($notification['project_name']) {
-                        echo '<br><small>مشروع: ' . $notification['project_name'] . '</small>';
-                    }
-                    // عرض اسم المرسل
-                    echo '<br><small>المرسل: ' . $notification['sender_name'] . '</small>';
-                    echo '</div>';
+    <div class="notification-box">
+        <h3>الإشعارات:</h3>
+        <?php
+        if (count($notifications) > 0) {
+            foreach ($notifications as $notification) {
+                echo '<div class="notification-item ' . ($notification['is_read'] == 0 ? 'unread' : '') . '">';
+                echo '<strong>' . htmlspecialchars($notification['message']) . '</strong><br>';
+                echo '<small>' . $notification['created_at'] . '</small>';
+                if (!empty($notification['project_name'])) {
+                    echo '<br><small>مشروع: ' . htmlspecialchars($notification['project_name']) . '</small>';
                 }
-            } else {
-                echo "<p>لا توجد إشعارات حالياً.</p>";
+                echo '<br><small>المرسل: ' . htmlspecialchars($notification['sender_name']) . '</small>';
+                echo '</div>';
             }
-            ?>
-        </div>
+        } else {
+            echo "<p>لا توجد إشعارات حالياً.</p>";
+        }
+        ?>
     </div>
+</div>
 
 </body>
 </html>

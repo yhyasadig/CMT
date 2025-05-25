@@ -3,15 +3,24 @@ require_once 'Database.php';
 require_once 'Notifications.php';
 
 class Report {
+    private static $instance = null;
+
     private $db;
     private $notification;
 
-    public function __construct(PDO $connection) {
-        $this->db = $connection;
-        $this->notification = new Notifications(new DatabaseConnection());
+    private function __construct() {
+        $dbConnection = new DatabaseConnection();
+        $this->db = $dbConnection->getConnection();
+        $this->notification = new Notifications($dbConnection);
     }
 
-    // ✅ إضافة تقرير جديد مع دعم الملف
+    public static function getInstance() {
+        if (self::$instance === null) {
+            self::$instance = new Report();
+        }
+        return self::$instance;
+    }
+
     public function addReport($senderId, $receiverId, $userRole, $title, $body, $fileName = null) {
         try {
             $stmt = $this->db->prepare("INSERT INTO reports 
@@ -27,7 +36,7 @@ class Report {
                 ':file_name' => $fileName
             ]);
 
-            $message = "📄 تم إرسال تقرير جديد بعنوان: $title";
+            $message = "تم إرسال تقرير جديد بعنوان: $title";
             $this->notification->sendNotification($receiverId, $message);
 
             return true;
@@ -36,7 +45,6 @@ class Report {
         }
     }
 
-    // ✅ جلب جميع التقارير المرسلة إلى مشرف معين
     public function getReportsForSupervisor($supervisorId) {
         $stmt = $this->db->prepare("SELECT r.*, u.name AS sender_name 
                                     FROM reports r 
@@ -47,7 +55,6 @@ class Report {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // ✅ جلب تقارير مرسلة من مستخدم معين
     public function getReportsByUser($userId) {
         $stmt = $this->db->prepare("SELECT r.*, u.name AS receiver_name
                                     FROM reports r
@@ -58,7 +65,6 @@ class Report {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // ✅ عرض تقرير واحد بالتفصيل
     public function getReportById($reportId) {
         $stmt = $this->db->prepare("SELECT r.*, 
                                            sender.name AS sender_name,
@@ -71,4 +77,3 @@ class Report {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }
-?>
