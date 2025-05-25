@@ -8,7 +8,7 @@ class DatabaseConnection {
     private $connection;
 
     public function __construct() {
-        $this->connect();
+        $this->connect();  // إنشاء الاتصال بقاعدة البيانات عند إنشاء الكائن
     }
 
     private function connect() {
@@ -19,21 +19,21 @@ class DatabaseConnection {
 
             // تعيين خصائص الاتصال لإظهار الأخطاء
             $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-            // لا تعرض رسالة عند نجاح الاتصال
-            // echo "تم الاتصال بقاعدة البيانات بنجاح!";
         } catch (PDOException $e) {
             // عرض الأخطاء في حالة الفشل
             die("فشل الاتصال بقاعدة البيانات: " . $e->getMessage());
         }
     }
 
-    // إرجاع الاتصال
+    // إرجاع الاتصال الفعلي باستخدام PDO
     public function getConnection() {
         return $this->connection;
     }
+
+    // دالة للتأكد من أن الاتصال مفتوح
+    public function isConnected() {
+        return isset($this->connection);
+    }
 }
 
-// اختبار الاتصال بقاعدة البيانات
-$dbConnection = new DatabaseConnection();
 ?>

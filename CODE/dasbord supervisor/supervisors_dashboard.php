@@ -106,8 +106,9 @@ $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <h2>لوحة تحكم المشرف</h2>
         <a href="add_project.php">إضافة مشروع</a>
         <a href="projects_list.php">عرض المشاريع</a>
-        <a href="projects_list.php">عرض التقارير</a>
-        <a href="project_dashboard.php" class="button">المشروع الخاص بي</a> <!-- زر المشروع الخاص بي -->
+        <a href="dashboard_taskmanager.php">ادارة المهام </a>
+        <a href="supervisor_reports.php">عرض التقارير</a>
+        
     </div>
 
     <!-- محتوى الصفحة -->
@@ -121,7 +122,7 @@ $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
             // التحقق إذا كانت هناك إشعارات
             if (count($notifications) > 0) {
                 foreach ($notifications as $notification) {
-                    echo '<div class="notification-item ' . ($notification['is_read'] == 0 ? 'unread' : '') . '">';
+                    echo '<div class="notification-item ' . (isset($notification['is_read']) && $notification['is_read'] == 0 ? 'unread' : '') . '">';
                     echo '<strong>' . htmlspecialchars($notification['message']) . '</strong><br>';
                     echo '<small>' . $notification['created_at'] . '</small>';
                     // عرض المشروع إذا كان موجوداً

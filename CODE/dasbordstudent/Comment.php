@@ -43,33 +43,38 @@ class Comment {
 
     // دالة لحفظ التعليق في قاعدة البيانات
     public function saveToDatabase($db) {
-        // التحقق أولاً إذا كان المستخدم مكلفًا بالمهمة
-        $query = "SELECT * FROM tasks WHERE task_id = :task_id AND assigned_to = :user_id";
-        $stmt = $db->prepare($query);
+        // التحقق أولاً إذا كان المستخدم مكلفًا بالمهمة أو مشرف
+        $query = "SELECT * FROM tasks WHERE task_id = :task_id AND (assigned_to = :user_id OR :role = 'supervis')";
+        $stmt = $db->getConnection()->prepare($query); // استخدام الاتصال PDO هنا
         $stmt->bindParam(':task_id', $this->task_id);
         $stmt->bindParam(':user_id', $this->user_id);
+        $stmt->bindParam(':role', $_SESSION['role']); // إذا كان المستخدم مشرف
         $stmt->execute();
 
         if ($stmt->rowCount() > 0) {
-            // إذا كان المستخدم مكلفًا بالمهمة، نكمل إضافة التعليق
+            // إذا كان المستخدم مكلفًا بالمهمة أو مشرف، نكمل إضافة التعليق
             $query = "INSERT INTO comments (task_id, user_id, comment_text, timestamp) 
                       VALUES (:task_id, :user_id, :comment_text, :timestamp)";
-            $stmt = $db->prepare($query);
+            $stmt = $db->getConnection()->prepare($query); // استخدام الاتصال PDO هنا
             $stmt->bindParam(':task_id', $this->task_id);
             $stmt->bindParam(':user_id', $this->user_id);
             $stmt->bindParam(':comment_text', $this->comment_text);
             $stmt->bindParam(':timestamp', $this->timestamp);
             return $stmt->execute();
         } else {
-            // إذا كان المستخدم غير مكلف بالمهمة، إرجاع خطأ
-            return false;
+            // إذا كان المستخدم غير مكلف بالمهمة ولا يمتلك صلاحية المشرف، إرجاع خطأ
+            return "Error: User is not authorized to comment on this task.";
         }
     }
 
-    // دالة لاسترجاع التعليقات المرتبطة بمهمة معينة
+    // دالة لاسترجاع التعليقات المرتبطة بمهمة معينة مع اسم المستخدم
     public static function getCommentsByTaskId($db, $task_id) {
-        $query = "SELECT * FROM comments WHERE task_id = :task_id ORDER BY timestamp DESC";
-        $stmt = $db->prepare($query);
+        // التعديل هنا لجلب اسم المستخدم بدلاً من الرقم
+        $query = "SELECT comments.*, users.name AS user_name FROM comments 
+                  JOIN users ON comments.user_id = users.user_id 
+                  WHERE comments.task_id = :task_id 
+                  ORDER BY comments.timestamp DESC";
+        $stmt = $db->getConnection()->prepare($query); // استخدام الاتصال PDO هنا
         $stmt->bindParam(':task_id', $task_id);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -80,7 +85,7 @@ class Comment {
         try {
             $this->comment_text = $newText;
             $query = "UPDATE comments SET comment_text = :comment_text WHERE comment_id = :comment_id";
-            $stmt = $db->prepare($query);
+            $stmt = $db->getConnection()->prepare($query); // استخدام الاتصال PDO هنا
             $stmt->bindParam(':comment_text', $this->comment_text);
             $stmt->bindParam(':comment_id', $this->comment_id);
             return $stmt->execute();
@@ -94,7 +99,7 @@ class Comment {
     public function deleteComment($db) {
         try {
             $query = "DELETE FROM comments WHERE comment_id = :comment_id";
-            $stmt = $db->prepare($query);
+            $stmt = $db->getConnection()->prepare($query); // استخدام الاتصال PDO هنا
             $stmt->bindParam(':comment_id', $this->comment_id);
             return $stmt->execute();
         } catch (Exception $e) {
