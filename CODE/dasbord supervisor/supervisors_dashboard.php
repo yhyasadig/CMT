@@ -100,7 +100,7 @@ $notifications = $notificationsObj->getNotifications($userId);
     <a href="projects_list.php">عرض المشاريع</a>
     <a href="dashboard_taskmanager.php">إدارة المهام</a>
     <a href="supervisor_reports.php">عرض التقارير</a>
-    <a href="supervisor_notifications.php">الإشعارات</a>
+    <a href="chat_supervisor.php">دردشة</a>
 </div>
 
 <!--  المحتوى الرئيسي -->

@@ -3,14 +3,14 @@ session_start();
 require_once 'Database.php';
 require_once 'Report.php';
 
-// التحقق من أن المستخدم مسجل كمشرف
+// ✅ التحقق من أن المستخدم لديه دور "supervis"
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'supervis') {
     die("غير مصرح بالدخول. يجب أن تكون مشرفًا.");
 }
 
 $db = new DatabaseConnection();
 $conn = $db->getConnection();
-$report = new Report($conn);
+$report = Report::getInstance($conn); // ✅ استخدام Singleton
 
 // جلب التقارير التي تخص هذا المشرف
 $supervisorId = $_SESSION['user_id'];
