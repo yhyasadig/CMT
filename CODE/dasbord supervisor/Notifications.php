@@ -1,26 +1,23 @@
 <?php
+require_once 'NotificationFactory.php';
+
 class Notifications {
     private $connection;
 
-    // مُنشئ الكلاس الذي يأخذ الاتصال بقاعدة البيانات
     public function __construct(DatabaseConnection $db) {
         $this->connection = $db->getConnection();
     }
 
-    // دالة لإرسال إشعار للمستخدم
-    public function sendNotification($userId, $message) {
+    // دالة لإرسال إشعار باستخدام Factory
+    public function sendNotification($userId, $message, $type = 'basic') {
         try {
-            $query = "INSERT INTO notifications (user_id, message) VALUES (:user_id, :message)";
-            $stmt = $this->connection->prepare($query);
-            $stmt->bindParam(':user_id', $userId);
-            $stmt->bindParam(':message', $message);
-            $stmt->execute();
+            $notifier = NotificationFactory::create($type, $this->connection);
+            $notifier->send($userId, $message);
         } catch (PDOException $e) {
             die("خطأ في إرسال الإشعار: " . $e->getMessage());
         }
     }
 
-    // دالة لجلب إشعارات المستخدم (مقروءة وغير مقروءة)
     public function getNotifications($userId) {
         try {
             $query = "SELECT n.notification_id, n.message, n.created_at, n.is_read, 
@@ -39,7 +36,6 @@ class Notifications {
         }
     }
 
-    // دالة لتحديث حالة الإشعار إلى "مقروء"
     public function markAsRead($notificationId) {
         try {
             $query = "UPDATE notifications SET is_read = 1 WHERE notification_id = :notification_id";
@@ -51,7 +47,6 @@ class Notifications {
         }
     }
 
-    // دالة لحذف إشعار
     public function deleteNotification($notificationId) {
         try {
             $query = "DELETE FROM notifications WHERE notification_id = :notification_id";
@@ -63,4 +58,3 @@ class Notifications {
         }
     }
 }
-?>
