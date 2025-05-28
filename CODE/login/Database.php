@@ -1,39 +1,46 @@
 <?php
 
 class DatabaseConnection {
-    private $host = "localhost";
-    private $dbName = "task_management"; // تأكد من صحة اسم قاعدة البيانات
-    private $username = "root"; // اسم المستخدم الافتراضي في XAMPP
-    private $password = ""; // تأكد من كلمة المرور الصحيحة في phpMyAdmin
-    private $connection;
+    private static ?DatabaseConnection $instance = null; // الكائن الوحيد من الكلاس
+    private PDO $connection;
 
-    public function __construct() {
-        $this->connect();  // إنشاء الاتصال بقاعدة البيانات عند إنشاء الكائن
+    // معلومات الاتصال
+    private string $host = "localhost";
+    private string $dbName = "task_management";
+    private string $username = "root";
+    private string $password = "";
+
+    // نجعل المُنشئ private لمنع الإنشاء من الخارج
+    private function __construct() {
+        $this->connect();
     }
 
-    private function connect() {
+    // إنشاء الاتصال
+    private function connect(): void {
         try {
-            // إعداد الاتصال باستخدام PDO
             $dsn = "mysql:host={$this->host};dbname={$this->dbName};charset=utf8mb4";
             $this->connection = new PDO($dsn, $this->username, $this->password);
-
-            // تعيين خصائص الاتصال لإظهار الأخطاء
             $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
-            // عرض الأخطاء في حالة الفشل
             die("فشل الاتصال بقاعدة البيانات: " . $e->getMessage());
         }
     }
 
-    // إرجاع الاتصال الفعلي باستخدام PDO
-    public function getConnection() {
+    // الدالة العامة للحصول على نفس الكائن (Singleton)
+    public static function getInstance(): DatabaseConnection {
+        if (self::$instance === null) {
+            self::$instance = new DatabaseConnection();
+        }
+        return self::$instance;
+    }
+
+    // للحصول على كائن الاتصال بـ PDO
+    public function getConnection(): PDO {
         return $this->connection;
     }
 
-    // دالة للتأكد من أن الاتصال مفتوح
-    public function isConnected() {
+    // التأكد من أن الاتصال موجود
+    public function isConnected(): bool {
         return isset($this->connection);
     }
 }
-
-?>
