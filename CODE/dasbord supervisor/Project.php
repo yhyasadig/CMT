@@ -9,6 +9,7 @@ class Project {
     private $leaderId;
     private $connection;
 
+<<<<<<< HEAD
     // المُنشئ
     public function __construct(DatabaseConnection $db, $projectId = null) {
         $this->connection = $db->getConnection();
@@ -31,6 +32,15 @@ class Project {
     }
 
     // جلب تفاصيل المشروع
+=======
+    // مُنشئ الكلاس
+    public function __construct(DatabaseConnection $db, $projectId) {
+        $this->connection = $db->getConnection(); // الاتصال بقاعدة البيانات
+        $this->projectId = $projectId;
+    }
+
+    // دالة لجلب تفاصيل المشروع
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     public function getProjectDetails() {
         try {
             $query = "SELECT * FROM projects WHERE project_id = :project_id";
@@ -49,11 +59,19 @@ class Project {
 
             return $project;
         } catch (PDOException $e) {
+<<<<<<< HEAD
             throw new Exception("حدث خطأ أثناء جلب تفاصيل المشروع: " . $e->getMessage());
         }
     }
 
     // تحديث كل بيانات المشروع
+=======
+            die("حدث خطأ أثناء جلب تفاصيل المشروع: " . $e->getMessage());
+        }
+    }
+
+    // دالة لتحديث بيانات المشروع (كل الحقول)
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     public function updateProjectDetails() {
         try {
             $query = "UPDATE projects 
@@ -69,6 +87,7 @@ class Project {
 
             return $stmt->execute();
         } catch (PDOException $e) {
+<<<<<<< HEAD
             throw new Exception("حدث خطأ أثناء تحديث المشروع: " . $e->getMessage());
         }
     }
@@ -99,6 +118,13 @@ class Project {
     }
 
     // إضافة مهمة
+=======
+            die("حدث خطأ أثناء تحديث المشروع: " . $e->getMessage());
+        }
+    }
+
+    // دالة لإضافة مهمة للمشروع
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     public function addTask($taskName, $taskDescription, $assignedTo, $dueDate) {
         try {
             $query = "INSERT INTO tasks (project_id, task_name, task_description, assigned_to, due_date, status) 
@@ -111,11 +137,19 @@ class Project {
             $stmt->bindParam(':dueDate', $dueDate);
             return $stmt->execute();
         } catch (PDOException $e) {
+<<<<<<< HEAD
             throw new Exception("حدث خطأ أثناء إضافة المهمة: " . $e->getMessage());
         }
     }
 
     // جلب المهام
+=======
+            die("حدث خطأ أثناء إضافة المهمة: " . $e->getMessage());
+        }
+    }
+
+    // دالة لعرض المهام الخاصة بالمشروع
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     public function getTasks() {
         try {
             $query = "SELECT * FROM tasks WHERE project_id = :projectId";
@@ -124,11 +158,19 @@ class Project {
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
+<<<<<<< HEAD
             throw new Exception("حدث خطأ أثناء استرجاع المهام: " . $e->getMessage());
         }
     }
 
     // إضافة عضو
+=======
+            die("حدث خطأ أثناء استرجاع المهام: " . $e->getMessage());
+        }
+    }
+
+    // دالة لإضافة عضو للمشروع
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     public function addMember($userId) {
         try {
             $query = "UPDATE users SET project_id = :projectId WHERE user_id = :userId";
@@ -137,11 +179,19 @@ class Project {
             $stmt->bindParam(':userId', $userId);
             return $stmt->execute();
         } catch (PDOException $e) {
+<<<<<<< HEAD
             throw new Exception("حدث خطأ أثناء إضافة العضو: " . $e->getMessage());
         }
     }
 
     // جلب اسم القائد
+=======
+            die("حدث خطأ أثناء إضافة العضو: " . $e->getMessage());
+        }
+    }
+
+    // دالة لعرض قائد الفريق
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     public function getLeader() {
         try {
             $query = "SELECT name FROM users WHERE user_id = :leaderId";
@@ -151,11 +201,44 @@ class Project {
             $leader = $stmt->fetch(PDO::FETCH_ASSOC);
             return $leader['name'];
         } catch (PDOException $e) {
+<<<<<<< HEAD
             throw new Exception("حدث خطأ أثناء استرجاع قائد الفريق: " . $e->getMessage());
         }
     }
 
     // Setters
+=======
+            die("حدث خطأ أثناء استرجاع قائد الفريق: " . $e->getMessage());
+        }
+    }
+
+    // دالة لتحديث المشروع
+    public function updateProject($newEndDate) {
+        try {
+            $query = "UPDATE projects SET end_date = :newEndDate WHERE project_id = :projectId";
+            $stmt = $this->connection->prepare($query);
+            $stmt->bindParam(':newEndDate', $newEndDate);
+            $stmt->bindParam(':projectId', $this->projectId);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            die("حدث خطأ أثناء تحديث المشروع: " . $e->getMessage());
+        }
+    }
+
+    // دالة لحذف المشروع
+    public function deleteProject() {
+        try {
+            $query = "DELETE FROM projects WHERE project_id = :projectId";
+            $stmt = $this->connection->prepare($query);
+            $stmt->bindParam(':projectId', $this->projectId);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            die("حدث خطأ أثناء حذف المشروع: " . $e->getMessage());
+        }
+    }
+
+    // Getter and Setter for project properties
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     public function setProjectName($name) {
         $this->projectName = $name;
     }
@@ -176,7 +259,10 @@ class Project {
         $this->leaderId = $leaderId;
     }
 
+<<<<<<< HEAD
     // Getters
+=======
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     public function getProjectId() {
         return $this->projectId;
     }

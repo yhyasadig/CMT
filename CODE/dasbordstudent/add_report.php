@@ -5,6 +5,7 @@ require_once 'Report.php';
 
 $db = new DatabaseConnection();
 $conn = $db->getConnection();
+<<<<<<< HEAD
 $report = Report::getInstance($conn);
 
 $msg = null;
@@ -22,6 +23,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("الرجاء ملء جميع الحقول المطلوبة.");
         }
 
+=======
+$report = Report::getInstance($conn); // ✅ استخدام getInstance بدلاً من new Report
+
+$msg = null;
+
+// عند إرسال النموذج
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $senderId = $_SESSION['user_id'] ?? null;
+    $userRole = $_SESSION['role'] ?? null;
+    $receiverId = $_POST['receiver_id'] ?? null;
+    $title = $_POST['title'] ?? '';
+    $body = $_POST['body'] ?? '';
+    $fileName = null;
+
+    if (!$senderId || !$receiverId || empty($title) || empty($body)) {
+        $msg = "❌ الرجاء ملء جميع الحقول المطلوبة.";
+    } else {
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
         // معالجة رفع الملف
         if (isset($_FILES['report_file']) && $_FILES['report_file']['error'] === 0) {
             $uploadDir = 'uploads/reports/';
@@ -34,16 +53,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $destination = $uploadDir . $fileName;
 
             if (!move_uploaded_file($_FILES['report_file']['tmp_name'], $destination)) {
+<<<<<<< HEAD
                 throw new Exception("فشل في رفع الملف.");
+=======
+                $msg = "❌ فشل في رفع الملف.";
+                $fileName = null;
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
             }
         }
 
         // إرسال التقرير
         $result = $report->addReport($senderId, $receiverId, $userRole, $title, $body, $fileName);
+<<<<<<< HEAD
         $msg = $result ? "تم إرسال التقرير بنجاح." : "حدث خطأ أثناء إرسال التقرير.";
 
     } catch (Exception $e) {
         $msg = $e->getMessage();
+=======
+        $msg = $result ? "✅ تم إرسال التقرير بنجاح" : "❌ حدث خطأ أثناء إرسال التقرير.";
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     }
 }
 ?>
@@ -114,7 +142,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <h2>إرسال تقرير إلى مشرف</h2>
 
     <?php if ($msg): ?>
+<<<<<<< HEAD
         <p class='msg'><?= htmlspecialchars($msg) ?></p>
+=======
+        <p class='msg'><?= $msg ?></p>
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     <?php endif; ?>
 
     <form method="POST" enctype="multipart/form-data">

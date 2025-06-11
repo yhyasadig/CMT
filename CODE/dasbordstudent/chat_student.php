@@ -2,6 +2,7 @@
 session_start();
 require_once 'Chat.php';
 
+<<<<<<< HEAD
 try {
     if (!isset($_SESSION['user_id']) || !isset($_SESSION['project_id'])) {
         throw new Exception("غير مصرح لك بالدخول.");
@@ -16,6 +17,17 @@ try {
     echo "<p style='text-align:center; color:red; font-weight:bold;'>{$e->getMessage()}</p>";
     exit;
 }
+=======
+// التحقق من تسجيل الدخول والطالب لديه مشروع
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['project_id'])) {
+    die("غير مصرح لك بالدخول.");
+}
+
+$chat = new Chat();
+$projectId = $_SESSION['project_id'];
+$messages = $chat->getMessagesByProject($projectId);
+$currentUserId = $_SESSION['user_id'];
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
 ?>
 
 <!DOCTYPE html>
@@ -137,6 +149,7 @@ try {
 
 <div class="chat-container">
     <div class="top-bar">
+<<<<<<< HEAD
         <h2>دردشة مشروعك</h2>
         <button onclick="window.history.back();">رجوع</button>
     </div>
@@ -153,13 +166,35 @@ try {
                 </span>
                 <?= nl2br(htmlspecialchars($message['message'])) ?>
                 <small><?= $message['created_at'] ?></small>
+=======
+        <h2>📚 دردشة مشروعك</h2>
+        <button onclick="window.history.back();">⬅️ رجوع</button>
+    </div>
+
+    <div class="chat-box">
+        <?php foreach ($messages as $msg): ?>
+            <?php
+                $isOwnMessage = ($msg['sender_id'] == $currentUserId);
+                $msgClass = $isOwnMessage ? 'sent' : 'received';
+            ?>
+            <div class="message <?= $msgClass ?>">
+                <span class="sender-name">
+                    <?= htmlspecialchars($msg['sender_name']) ?> (<?= $msg['role'] ?>)
+                </span>
+                <?= nl2br(htmlspecialchars($msg['message'])) ?>
+                <small><?= $msg['created_at'] ?></small>
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
             </div>
         <?php endforeach; ?>
     </div>
 
     <form method="post" action="send_chat.php" class="chat-form">
         <textarea name="message" rows="3" placeholder="اكتب رسالتك هنا..." required></textarea>
+<<<<<<< HEAD
         <button type="submit">إرسال</button>
+=======
+        <button type="submit">📨 إرسال</button>
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     </form>
 </div>
 

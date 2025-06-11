@@ -198,6 +198,7 @@ class TaskManager {
             return false;
         }
     }
+<<<<<<< HEAD
 
     // دالة لتحديث بيانات المهمة (العنوان، الوصف، المعين، الموعد النهائي، الحالة)
     public function updateTask($taskId, $title, $description, $assignedTo, $dueDate, $status) {
@@ -216,5 +217,8 @@ class TaskManager {
             return false;
         }
     }
+=======
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
 }
 ?>
+
