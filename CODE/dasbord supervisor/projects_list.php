@@ -2,56 +2,60 @@
 // بدء الجلسة
 session_start();
 
-// التحقق من أن المستخدم هو مشرف
-if ($_SESSION['role'] != 'supervis') {
-    header("Location: index.php");  // إعادة التوجيه إلى صفحة تسجيل الدخول إذا لم يكن مشرف
-    exit();
-}
-
-// الاتصال بقاعدة البيانات
-include 'Database.php';  // تأكد من أنك تستخدم الملف المناسب للاتصال بقاعدة البيانات
-include 'Project.php'; // استيراد كلاس Project
-
-$db = new DatabaseConnection();
-$connection = $db->getConnection();  // الحصول على الاتصال بقاعدة البيانات
-
-// استعلام لجلب جميع المشاريع مع اسم القائد
-$query = "SELECT p.project_id, p.name AS project_name, p.description, p.start_date, p.end_date, u.name AS leader_name
-          FROM projects p
-          JOIN users u ON p.leader_id = u.user_id";
-$stmt = $connection->prepare($query);
-$stmt->execute();
-$projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// حذف مشروع
-if (isset($_GET['delete_id'])) {
-    $deleteId = $_GET['delete_id'];
-
-    // إنشاء كائن من كلاس Project لحذف المشروع
-    $project = new Project($db, $deleteId, null, null, null, null);
-    if ($project->deleteProject()) {
-        $message = "تم حذف المشروع بنجاح!";
-    } else {
-        $message = "حدث خطأ أثناء حذف المشروع.";
+try {
+    // التحقق من أن المستخدم هو مشرف
+    if ($_SESSION['role'] != 'supervis') {
+        header("Location: index.php");  // إعادة التوجيه إلى صفحة تسجيل الدخول إذا لم يكن مشرف
+        exit();
     }
-}
 
-// تعديل مشروع
-if (isset($_POST['update_project'])) {
-    $project_id = $_POST['project_id'];
-    $name = $_POST['name'];
-    $description = $_POST['description'];
-    $start_date = $_POST['start_date'];
-    $end_date = $_POST['end_date'];
-    $leader_id = $_POST['leader_id']; // القائد الذي تم اختياره
+    // الاتصال بقاعدة البيانات
+    include 'Database.php';   // الاتصال بقاعدة البيانات
+    include 'Project.php';    // كلاس المشروع
 
-    // إنشاء كائن من كلاس Project لتحديث المشروع
-    $project = new Project($db, $project_id, $name, $start_date, $end_date, $leader_id);
-    if ($project->updateProject($end_date)) {
-        $message = "تم تحديث المشروع بنجاح!";
-    } else {
-        $message = "حدث خطأ أثناء تحديث المشروع.";
+    $db = new DatabaseConnection();
+
+    // حذف مشروع
+    if (isset($_GET['delete_id'])) {
+        $deleteId = $_GET['delete_id'];
+        $project = new Project($db, $deleteId);
+        if ($project->deleteProject()) {
+            $message = "تم حذف المشروع بنجاح!";
+        } else {
+            $message = "حدث خطأ أثناء حذف المشروع.";
+        }
     }
+
+    // تعديل مشروع
+    if (isset($_POST['update_project'])) {
+        $project_id = $_POST['project_id'];
+        $name = $_POST['name'];
+        $description = $_POST['description'];
+        $start_date = $_POST['start_date'];
+        $end_date = $_POST['end_date'];
+        $leader_id = $_POST['leader_id'];
+
+        $project = new Project($db, $project_id);
+        $project->setProjectName($name);
+        $project->setProjectDescription($description);
+        $project->setStartDate($start_date);
+        $project->setEndDate($end_date);
+        $project->setLeaderId($leader_id);
+
+        if ($project->updateProjectDetails()) {
+            $message = "تم تحديث المشروع بنجاح!";
+        } else {
+            $message = "حدث خطأ أثناء تحديث المشروع.";
+        }
+    }
+
+    // جلب جميع المشاريع باستخدام الكلاس
+    $projects = Project::getAllProjects($db);
+
+} catch (PDOException $e) {
+    $message = "خطأ في قاعدة البيانات: " . $e->getMessage();
+} catch (Exception $e) {
+    $message = "حدث خطأ غير متوقع: " . $e->getMessage();
 }
 ?>
 
@@ -109,12 +113,28 @@ if (isset($_POST['update_project'])) {
         .action-btn:hover {
             background-color: #0056b3;
         }
+
+        .message {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            max-width: 1000px;
+            margin: 20px auto;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>قائمة المشاريع</h2>
+
+    <?php if (isset($message)): ?>
+        <div class="message"><?php echo htmlspecialchars($message); ?></div>
+    <?php endif; ?>
 
     <!-- عرض قائمة المشاريع -->
     <table>
@@ -132,14 +152,13 @@ if (isset($_POST['update_project'])) {
         <tbody>
             <?php foreach ($projects as $project): ?>
                 <tr>
-                    <td><?php echo $project['project_id']; ?></td>
-                    <td><?php echo $project['project_name']; ?></td>
-                    <td><?php echo $project['description']; ?></td>
-                    <td><?php echo $project['start_date']; ?></td>
-                    <td><?php echo $project['end_date']; ?></td>
-                    <td><?php echo $project['leader_name']; ?></td>
+                    <td><?php echo htmlspecialchars($project['project_id']); ?></td>
+                    <td><?php echo htmlspecialchars($project['project_name']); ?></td>
+                    <td><?php echo htmlspecialchars($project['description']); ?></td>
+                    <td><?php echo htmlspecialchars($project['start_date']); ?></td>
+                    <td><?php echo htmlspecialchars($project['end_date']); ?></td>
+                    <td><?php echo htmlspecialchars($project['leader_name']); ?></td>
                     <td>
-                        <!-- أزرار التعديل والحذف -->
                         <a href="edit_project.php?project_id=<?php echo $project['project_id']; ?>">
                             <button class="action-btn">تعديل</button>
                         </a>

@@ -12,57 +12,68 @@ if ($_SESSION['role'] != 'supervis') {
 include 'Database.php';  // تأكد من أنك تستخدم الملف المناسب للاتصال بقاعدة البيانات
 include 'Project.php'; // استيراد كلاس Project
 
-// الاتصال بقاعدة البيانات
-$db = new DatabaseConnection();
-$connection = $db->getConnection();  // الحصول على الاتصال بقاعدة البيانات
+try {
+    // الاتصال بقاعدة البيانات
+    $db = new DatabaseConnection();
+    $connection = $db->getConnection();  // الحصول على الاتصال بقاعدة البيانات
 
-// التحقق من وجود معرف المشروع في الرابط
-if (isset($_GET['project_id'])) {
-    $project_id = $_GET['project_id'];
+    // التحقق من وجود معرف المشروع في الرابط
+    if (isset($_GET['project_id'])) {
+        $project_id = $_GET['project_id'];
 
-    // إنشاء كائن من كلاس Project
-    $project = new Project($db, $project_id); // تمرير كائن DatabaseConnection هنا
-    $projectDetails = $project->getProjectDetails();  // جلب تفاصيل المشروع
+        // إنشاء كائن من كلاس Project
+        $project = new Project($db, $project_id); // تمرير كائن DatabaseConnection هنا
+        $projectDetails = $project->getProjectDetails();  // جلب تفاصيل المشروع
 
-    // التحقق من وجود المشروع
-    if (!$projectDetails) {
+        // التحقق من وجود المشروع
+        if (!$projectDetails) {
+            die("المشروع غير موجود.");
+        }
+    } else {
         die("المشروع غير موجود.");
     }
-} else {
-    die("المشروع غير موجود.");
-}
 
-// استعلام لاختيار الطلبة لتعيين قائد الفريق
-$query = "SELECT user_id, name FROM users WHERE role = 'student'";
-try {
-    $stmt = $connection->prepare($query);
-    $stmt->execute();
-    $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    die("خطأ في استعلام جلب الطلبة: " . $e->getMessage());
-}
-
-// معالجة البيانات عند تقديم النموذج
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $name = $_POST['name'];
-    $description = $_POST['description'];
-    $start_date = $_POST['start_date'];
-    $end_date = $_POST['end_date'];
-    $leader_id = $_POST['leader_id'] ?: null;  // في حال عدم تحديد قائد، سيتم تعيينه إلى null
-
-    // تحديث بيانات المشروع باستخدام كلاس Project
-    $project->setProjectName($name);
-    $project->setProjectDescription($description);
-    $project->setStartDate($start_date);
-    $project->setEndDate($end_date);
-    $project->setLeaderId($leader_id);
-
-    // تنفيذ التحديث
-    if ($project->updateProjectDetails()) {
-        $message = "تم تحديث المشروع بنجاح!";
-    } else {
-        $message = "حدث خطأ أثناء تحديث المشروع.";
+    // استعلام لاختيار الطلبة لتعيين قائد الفريق
+    $query = "SELECT user_id, name FROM users WHERE role = 'student'";
+    try {
+        $stmt = $connection->prepare($query);
+        $stmt->execute();
+        $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        die("خطأ في استعلام جلب الطلبة: " . $e->getMessage());
     }
+
+    // معالجة البيانات عند تقديم النموذج
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        $name = $_POST['name'];
+        $description = $_POST['description'];
+        $start_date = $_POST['start_date'];
+        $end_date = $_POST['end_date'];
+        $leader_id = $_POST['leader_id'] ?: null;  // في حال عدم تحديد قائد، سيتم تعيينه إلى null
+
+        // تحديث بيانات المشروع باستخدام كلاس Project
+        $project->setProjectName($name);
+        $project->setProjectDescription($description);
+        $project->setStartDate($start_date);
+        $project->setEndDate($end_date);
+        $project->setLeaderId($leader_id);
+
+        try {
+            // تنفيذ التحديث
+            if ($project->updateProjectDetails()) {
+                $message = "تم تحديث المشروع بنجاح!";
+            } else {
+                $message = "حدث خطأ أثناء تحديث المشروع.";
+            }
+        } catch (Exception $ex) {
+            $message = "خطأ أثناء تحديث المشروع: " . $ex->getMessage();
+        }
+    }
+
+} catch (PDOException $e) {
+    die("خطأ في الاتصال بقاعدة البيانات: " . $e->getMessage());
+} catch (Exception $ex) {
+    die("حدث خطأ: " . $ex->getMessage());
 }
 ?>
 

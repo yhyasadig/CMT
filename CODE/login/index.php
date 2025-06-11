@@ -14,34 +14,42 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    $loggedInUser = $userManager->login($email, $password);
+    try {
+        $loggedInUser = $userManager->login($email, $password);
 
-    if ($loggedInUser) {
-        // تخزين بيانات المستخدم في الجلسة
-        $_SESSION['user_id'] = $loggedInUser['user_id']; // تخزين ID المستخدم
-        $_SESSION['name'] = $loggedInUser['name']; // تخزين اسم المستخدم
-        $_SESSION['role'] = $loggedInUser['role']; // تخزين دور المستخدم
+        if ($loggedInUser) {
+            // تخزين بيانات المستخدم في الجلسة
+            $_SESSION['user_id'] = $loggedInUser['user_id']; // تخزين ID المستخدم
+            $_SESSION['name'] = $loggedInUser['name']; // تخزين اسم المستخدم
+            $_SESSION['role'] = $loggedInUser['role']; // تخزين دور المستخدم
 
-        // توجيه المستخدم بناءً على الدور
-        if ($_SESSION['role'] == 'admin') {
-            // توجيه إلى لوحة تحكم المسؤول
-            header("Location: dashboard.php");
-        } elseif ($_SESSION['role'] == 'supervis') {
-            // توجيه إلى لوحة تحكم المشرف
-            header("Location: supervisors_dashboard.php");
-        } elseif ($_SESSION['role'] == 'automember') {
-            // توجيه إلى لوحة تحكم العضو
-            header("Location: dashboard-automember.php");
-        } elseif ($_SESSION['role'] == 'student') {
-            // توجيه إلى لوحة تحكم الطالب
-            header("Location: student_dashboard.php");
+            // توجيه المستخدم بناءً على الدور
+            if ($_SESSION['role'] == 'admin') {
+                // توجيه إلى لوحة تحكم المسؤول
+                header("Location: dashboard.php");
+            } elseif ($_SESSION['role'] == 'supervis') {
+                // توجيه إلى لوحة تحكم المشرف
+                header("Location: supervisors_dashboard.php");
+            } elseif ($_SESSION['role'] == 'automember') {
+                // توجيه إلى لوحة تحكم العضو
+                header("Location: dashboard-automember.php");
+            } elseif ($_SESSION['role'] == 'student') {
+                // توجيه إلى لوحة تحكم الطالب
+                header("Location: student_dashboard.php");
+            } else {
+                // في حالة لم يكن المستخدم "admin" أو "supervis" أو "automember" أو "student"
+                header("Location: index.php");
+            }
+            exit();
         } else {
-            // في حالة لم يكن المستخدم "admin" أو "supervis" أو "automember" أو "student"
-            header("Location: index.php");
+            $error = "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
         }
-        exit();
-    } else {
-        $error = "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
+    } catch (Exception $e) {
+        // يمكنك تسجيل الخطأ في ملف خاص مثلاً errors.log
+        // error_log($e->getMessage(), 3, __DIR__ . '/errors.log');
+
+        // رسالة عامة للمستخدم
+        $error = "حدث خطأ داخلي، يرجى المحاولة لاحقًا.";
     }
 }
 ?>
@@ -86,7 +94,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <h3 class="text-center mb-4">تسجيل الدخول</h3>
 
     <?php if ($error): ?>
-        <div class="alert alert-danger text-center"><?php echo $error; ?></div>
+        <div class="alert alert-danger text-center"><?php echo htmlspecialchars($error); ?></div>
     <?php endif; ?>
 
     <form method="POST" action="">

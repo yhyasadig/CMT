@@ -1,44 +1,44 @@
 <?php
-// التأكد من أن المستخدم هو مشرف
 session_start();
 if ($_SESSION['role'] != 'admin') {
-    header("Location: login.php");  // إعادة التوجيه إلى صفحة تسجيل الدخول إذا لم يكن مشرف
+    header("Location: login.php");
     exit();
 }
 
-// الاتصال بقاعدة البيانات
-include 'Database.php';  // تأكد من استخدام الملف المناسب للاتصال بقاعدة البيانات
+require_once 'Database.php';
+require_once 'User.php';
+
 $db = new DatabaseConnection();
-$connection = $db->getConnection();  // الحصول على الاتصال بقاعدة البيانات
+$userObj = new User($db);
 
-// حذف طالب من قاعدة البيانات
-if (isset($_GET['delete_id'])) {
-    $deleteId = $_GET['delete_id'];
+$message = '';
 
-    // استعلام لحذف الطالب
-    $query = "DELETE FROM users WHERE user_id = :id AND role = 'student'";
-    $stmt = $connection->prepare($query);
-    $stmt->bindParam(':id', $deleteId, PDO::PARAM_INT);
-    
-    if ($stmt->execute()) {
-        $message = "تم حذف الطالب بنجاح!";
-    } else {
-        $message = "حدث خطأ أثناء حذف الطالب.";
+try {
+    // حذف طالب بناءً على المعرف القادم من الرابط
+    if (isset($_GET['delete_id'])) {
+        $deleteId = (int)$_GET['delete_id'];
+
+        if ($userObj->deleteStudentById($deleteId)) {
+            $message = "تم حذف الطالب بنجاح!";
+        } else {
+            $message = "حدث خطأ أثناء حذف الطالب.";
+        }
     }
-}
 
-// استعلام لجلب قائمة الطلاب (المستخدمين الذين لديهم role = 'student')
-$query = "SELECT * FROM users WHERE role = 'student'";
-$stmt = $connection->prepare($query);
-$stmt->execute();
-$students = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // جلب جميع الطلاب
+    $students = $userObj->getAllStudents();
+} catch (PDOException $e) {
+    // معالجة الخطأ
+    $message = "حدث خطأ في الاتصال بقاعدة البيانات: " . $e->getMessage();
+    $students = []; // لتفادي خطأ في حالة عدم تعريف $students
+}
 ?>
 
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>قائمة الطلبة</title>
     <style>
         body {
@@ -46,7 +46,6 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
             background-color: #f7f7f7;
             color: #333;
         }
-
         .container {
             max-width: 600px;
             margin: 50px auto;
@@ -55,27 +54,22 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-
         h2 {
             text-align: center;
             margin-bottom: 20px;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
         }
-
         table, th, td {
             border: 1px solid #ccc;
         }
-
         th, td {
             padding: 10px;
             text-align: center;
         }
-
         .delete-btn {
             color: white;
             background-color: red;
@@ -84,24 +78,25 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
             border-radius: 4px;
             cursor: pointer;
         }
-
         .delete-btn:hover {
             background-color: darkred;
         }
-
-        .error-message {
-            color: red;
+        .message {
             text-align: center;
-            margin-top: 10px;
+            margin-bottom: 15px;
+            color: green;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-
 <div class="container">
     <h2>قائمة الطلبة</h2>
 
-    <!-- عرض قائمة الطلبة -->
+    <?php if ($message): ?>
+        <div class="message"><?php echo htmlspecialchars($message); ?></div>
+    <?php endif; ?>
+
     <table>
         <thead>
             <tr>
@@ -114,11 +109,11 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <tbody>
             <?php foreach ($students as $student) : ?>
                 <tr>
-                    <td><?php echo $student['user_id']; ?></td>
-                    <td><?php echo $student['name']; ?></td>
-                    <td><?php echo $student['email']; ?></td>
+                    <td><?php echo htmlspecialchars($student['user_id']); ?></td>
+                    <td><?php echo htmlspecialchars($student['name']); ?></td>
+                    <td><?php echo htmlspecialchars($student['email']); ?></td>
                     <td>
-                        <a href="?delete_id=<?php echo $student['user_id']; ?>">
+                        <a href="?delete_id=<?php echo (int)$student['user_id']; ?>" onclick="return confirm('هل أنت متأكد من حذف هذا الطالب؟');">
                             <button class="delete-btn">حذف</button>
                         </a>
                     </td>
@@ -127,6 +122,5 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </tbody>
     </table>
 </div>
-
 </body>
 </html>

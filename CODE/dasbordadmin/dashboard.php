@@ -1,8 +1,23 @@
 <?php
-// التأكد من أن المستخدم هو مشرف
 session_start();
-if ($_SESSION['role'] != 'admin') {
-    header("Location: login.php");  // إعادة التوجيه إلى صفحة تسجيل الدخول إذا لم يكن مشرف
+
+try {
+    // تحقق من وجود role في الجلسة
+    if (!isset($_SESSION['role'])) {
+        throw new Exception("لم يتم تسجيل الدخول بعد.");
+    }
+
+    // التأكد من أن المستخدم هو مشرف
+    if ($_SESSION['role'] != 'admin') {
+        header("Location: login.php");  // إعادة التوجيه إلى صفحة تسجيل الدخول إذا لم يكن مشرف
+        exit();
+    }
+
+    // يمكنك إضافة كود إضافي هنا إذا كنت تحتاج تتعامل مع قاعدة البيانات
+
+} catch (Exception $e) {
+    // عرض رسالة الخطأ بشكل آمن أو إعادة توجيه حسب الحاجة
+    echo "<p style='color:red; text-align:center; margin-top:20px;'>خطأ: " . htmlspecialchars($e->getMessage()) . "</p>";
     exit();
 }
 ?>
@@ -10,8 +25,8 @@ if ($_SESSION['role'] != 'admin') {
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>لوحة تحكم الادمن</title>
     <style>
         /* تنسيق الصفحة */
@@ -20,7 +35,6 @@ if ($_SESSION['role'] != 'admin') {
             background-color: #f4f4f4;
             margin: 0;
         }
-
         /* تصميم السايد بار */
         .sidebar {
             position: fixed;
@@ -33,7 +47,6 @@ if ($_SESSION['role'] != 'admin') {
             color: white;
             text-align: center;
         }
-
         .sidebar a {
             color: white;
             display: block;
@@ -41,21 +54,17 @@ if ($_SESSION['role'] != 'admin') {
             text-decoration: none;
             font-size: 18px;
         }
-
         .sidebar a:hover {
             background-color: #575757;
         }
-
         /* محتوى الصفحة */
         .main-content {
             margin-right: 260px;
             padding: 20px;
         }
-
         h1 {
             color: #333;
         }
-
         /* تنسيق الأزرار في الداش بورد */
         .button {
             padding: 10px 20px;
@@ -66,11 +75,9 @@ if ($_SESSION['role'] != 'admin') {
             text-decoration: none;
             margin-top: 20px;
         }
-
         .button:hover {
             background-color: #45a049;
         }
-
     </style>
 </head>
 <body>

@@ -1,32 +1,37 @@
 <?php
 session_start();
-include 'Database.php';
+require_once 'Database.php';
+require_once 'User.php';
 
-$db = new DatabaseConnection();
-$connection = $db->getConnection();  // الحصول على الاتصال بقاعدة البيانات
+try {
+    $db = new DatabaseConnection();
+    $connection = $db->getConnection();
 
-// التحقق من أن المستخدم هو طالب
-if ($_SESSION['role'] != 'student') {
-    header("Location: login.php");
-    exit();
+    // التحقق من أن المستخدم هو طالب
+    if ($_SESSION['role'] != 'student') {
+        header("Location: login.php");
+        exit();
+    }
+
+    // إنشاء كائن User وتمرير الاتصال
+    $userObj = new User($db);
+
+    // جلب بيانات الطالب باستخدام دالة من كلاس User
+    $student = $userObj->getUserById($_SESSION['user_id']);
+
+} catch (PDOException $e) {
+    die("حدث خطأ في قاعدة البيانات: " . $e->getMessage());
 }
-
-// استعلام لعرض معلومات الطالب
-$query = "SELECT * FROM users WHERE user_id = :user_id";
-$stmt = $connection->prepare($query);
-$stmt->bindParam(':user_id', $_SESSION['user_id']);
-$stmt->execute();
-$student = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>تفاصيل الطالب</title>
     <style>
-        /* إضافة تنسيق للسايد بار */
+        /* تنسيق السايد بار */
         .sidebar {
             width: 250px;
             height: 100%;
@@ -38,7 +43,6 @@ $student = $stmt->fetch(PDO::FETCH_ASSOC);
             color: white;
             text-align: center;
         }
-
         .sidebar a {
             display: block;
             padding: 10px;
@@ -46,26 +50,21 @@ $student = $stmt->fetch(PDO::FETCH_ASSOC);
             text-decoration: none;
             font-size: 18px;
         }
-
         .sidebar a:hover {
             background-color: #575757;
         }
-
         .main-content {
             margin-left: 260px;
             padding: 20px;
         }
-
         h2 {
             color: #333;
         }
-
         table {
             width: 100%;
             border: 1px solid #ccc;
             margin-top: 20px;
         }
-
         th, td {
             padding: 10px;
             text-align: center;
@@ -88,15 +87,15 @@ $student = $stmt->fetch(PDO::FETCH_ASSOC);
         <table>
             <tr>
                 <th>الاسم</th>
-                <td><?php echo $student['name']; ?></td>
+                <td><?php echo htmlspecialchars($student['name']); ?></td>
             </tr>
             <tr>
                 <th>البريد الإلكتروني</th>
-                <td><?php echo $student['email']; ?></td>
+                <td><?php echo htmlspecialchars($student['email']); ?></td>
             </tr>
             <tr>
                 <th>الدور</th>
-                <td><?php echo $student['role']; ?></td>
+                <td><?php echo htmlspecialchars($student['role']); ?></td>
             </tr>
         </table>
     </div>

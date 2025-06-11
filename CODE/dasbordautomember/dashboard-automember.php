@@ -1,17 +1,17 @@
 <?php
 // بدء الجلسة
 session_start();
+include 'Database.php';
+include 'Notifications.php'; // ربط كلاس الإشعارات
 
-// التحقق من أن المستخدم هو قائد الفريق أو مشرف
+$db = new DatabaseConnection();
+$connection = $db->getConnection();  // الحصول على الاتصال بقاعدة البيانات
+
+// التحقق من أن المستخدم هو قائد الفريق
 if ($_SESSION['role'] != 'supervis' && $_SESSION['role'] != 'automember') {
     header("Location: index.php");  // إعادة التوجيه إلى صفحة تسجيل الدخول إذا لم يكن قائد الفريق أو مشرف
     exit();
 }
-
-// الاتصال بقاعدة البيانات
-include 'Database.php';  // تأكد من أنك تستخدم الملف المناسب للاتصال بقاعدة البيانات
-$db = new DatabaseConnection();
-$connection = $db->getConnection();  // الحصول على الاتصال بقاعدة البيانات
 
 // التحقق من وجود معرف المشروع في الجلسة
 if (isset($_SESSION['user_id'])) {
@@ -28,13 +28,26 @@ if (isset($_SESSION['user_id'])) {
         // التحقق من وجود المشروع
         if (!$project) {
             $message = "لا يوجد مشروع مرتبط بحسابك."; // رسالة في حالة عدم وجود مشروع
+        } else {
+            // إذا تم العثور على المشروع، نقوم بتخزين project_id و user_id في الجلسة
+            $_SESSION['project_id'] = $project['project_id'];  // تخزين project_id في الجلسة
+            $_SESSION['user_id'] = $user_id;  // تخزين user_id في الجلسة
         }
     } catch (PDOException $e) {
         // في حالة حدوث خطأ في الاتصال أو الاستعلام
-        die("خطأ في الاتصال بقاعدة البيانات: " . $e->getMessage());
+        $message = "خطأ في الاتصال بقاعدة البيانات: " . htmlspecialchars($e->getMessage());
     }
 } else {
     $message = "لا يوجد مشروع مرتبط بحسابك."; // رسالة في حالة عدم وجود مشروع
+}
+
+// جلب الإشعارات من كلاس Notifications
+try {
+    $notificationObj = new Notifications($db);
+    $notifications = $notificationObj->getNotifications($_SESSION['user_id']);
+} catch (Exception $e) {
+    $notifications = [];
+    $message = "حدث خطأ أثناء جلب الإشعارات: " . htmlspecialchars($e->getMessage());
 }
 ?>
 
@@ -45,6 +58,7 @@ if (isset($_SESSION['user_id'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة تحكم قائد الفريق</title>
     <style>
+        /* نفس الـ CSS الموجود سابقاً */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
@@ -141,12 +155,27 @@ if (isset($_SESSION['user_id'])) {
             font-size: 18px;
             margin-top: 20px;
         }
-
         .error-message {
             color: red;
             text-align: center;
             font-size: 18px;
             margin-top: 20px;
+        }
+
+        .notification-box {
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+        }
+
+        .notification-item {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .notification-item.unread {
+            background-color: #fffbcc;
         }
     </style>
 </head>
@@ -159,8 +188,11 @@ if (isset($_SESSION['user_id'])) {
             <li><a href="student_dashboard.php">الصفحة الرئيسية</a></li>
             <li><a href="project_details.php">عرض تفاصيل المشروع</a></li>
             <li><a href="add_team_members.php">إضافة أعضاء الفريق</a></li>
-            <!-- زر المشروع الخاص بي -->
-            <li><a href="project_dashboard.php">المشروع الخاص بي</a></li> <!-- يوجه إلى الصفحة الخاصة بالمشروع -->
+            <li><a href="dashboard_file.php">المهام</a></li>
+            <li><a href="dashboard_taskmanager.php">إضافة مهام</a></li>
+            <li><a href="add_report.php">إضافة تقارير</a></li>
+            <li><a href="chat_student.php">دردشة</a></li>
+            
         </ul>
     </div>
 
@@ -168,17 +200,28 @@ if (isset($_SESSION['user_id'])) {
     <div class="main-content">
         <h2>مرحبًا بك في لوحة تحكم قائد الفريق</h2>
 
-        <!-- عرض رسالة في حالة عدم وجود مشروع -->
+        <!-- عرض الإشعارات -->
+        <h3>الإشعارات:</h3>
+        <div class="notification-box">
+            <?php if (count($notifications) > 0): ?>
+                <?php foreach ($notifications as $noti): ?>
+                    <div class="notification-item <?php echo $noti['is_read'] == 0 ? 'unread' : ''; ?>">
+                        <strong><?php echo htmlspecialchars($noti['message']); ?></strong><br>
+                        <small><?php echo htmlspecialchars($noti['created_at']); ?></small>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p>لا توجد إشعارات حالياً.</p>
+            <?php endif; ?>
+        </div>
+
+        <!-- رسالة في حال لا يوجد مشروع أو أخطاء -->
         <?php if (isset($message)): ?>
-            <p class="error-message"><?php echo $message; ?></p>
-            <h3>لا يوجد مشروع مرتبط بحسابك</h3>
-            <p>يرجى التأكد من أن قائد الفريق قد أضافك للمشروع.</p>
+            <p class="<?php echo strpos($message, 'خطأ') !== false ? 'error-message' : 'message'; ?>">
+                <?php echo htmlspecialchars($message); ?>
+            </p>
         <?php endif; ?>
 
-        <!-- إذا كان المشروع موجودًا، نعرض تفاصيله -->
-        <?php if (isset($project)): ?>
-            <p class="message">تم العثور على مشروعك: <strong><?php echo $project['name']; ?></strong></p>
-        <?php endif; ?>
     </div>
 
 </body>

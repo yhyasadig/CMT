@@ -67,7 +67,7 @@ class User {
         }
     }
 
-    // حذف مستخدم (اختياري)
+    // حذف مستخدم (عام)
     public function delete($userId) {
         try {
             $query = $this->connection->prepare("DELETE FROM users WHERE user_id = :user_id");
@@ -75,6 +75,30 @@ class User {
             return $query->execute();
         } catch (PDOException $e) {
             error_log("خطأ في حذف المستخدم: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    // جلب كل الطلاب (role = 'student')
+    public function getAllStudents() {
+        try {
+            $query = $this->connection->prepare("SELECT * FROM users WHERE role = 'student'");
+            $query->execute();
+            return $query->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("خطأ في جلب الطلاب: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    // حذف طالب بناءً على user_id (يتأكد من أن الدور 'student')
+    public function deleteStudentById($userId) {
+        try {
+            $query = $this->connection->prepare("DELETE FROM users WHERE user_id = :user_id AND role = 'student'");
+            $query->bindParam(':user_id', $userId);
+            return $query->execute();
+        } catch (PDOException $e) {
+            error_log("خطأ في حذف الطالب: " . $e->getMessage());
             return false;
         }
     }

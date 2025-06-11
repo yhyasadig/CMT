@@ -8,26 +8,28 @@ if ($_SESSION['role'] != 'admin') {
 
 // الاتصال بقاعدة البيانات
 include 'Database.php';  // تأكد من استخدام الملف المناسب للاتصال بقاعدة البيانات
-$db = new DatabaseConnection();
-$connection = $db->getConnection();  // الحصول على الاتصال بقاعدة البيانات
+require_once 'User.php'; // استدعاء كلاس المستخدم
 
-// حذف مشرف من قاعدة البيانات
+$db = new DatabaseConnection();
+$userObj = new User($db);
+
+$message = '';
 if (isset($_GET['delete_id'])) {
     $deleteId = $_GET['delete_id'];
-
-    // استعلام لحذف المشرف
-    $query = "DELETE FROM users WHERE user_id = :id AND role = 'supervis'";
-    $stmt = $connection->prepare($query);
-    $stmt->bindParam(':id', $deleteId, PDO::PARAM_INT);
     
-    if ($stmt->execute()) {
-        $message = "تم حذف المشرف بنجاح!";
-    } else {
-        $message = "حدث خطأ أثناء حذف المشرف.";
+    try {
+        if ($userObj->delete($deleteId)) {
+            $message = "تم حذف المشرف بنجاح!";
+        } else {
+            $message = "حدث خطأ أثناء حذف المشرف.";
+        }
+    } catch (Exception $e) {
+        $message = "خطأ: " . $e->getMessage();
     }
 }
 
-// استعلام لجلب قائمة المشرفين (المستخدمين الذين لديهم role = 'supervis')
+// جلب قائمة المشرفين
+$connection = $db->getConnection();
 $query = "SELECT * FROM users WHERE role = 'supervis'";
 $stmt = $connection->prepare($query);
 $stmt->execute();
@@ -41,6 +43,7 @@ $supervisors = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>قائمة المشرفين</title>
     <style>
+        /* نفس التنسيق السابق */
         body {
             font-family: Arial, sans-serif;
             background-color: #f7f7f7;
@@ -89,10 +92,11 @@ $supervisors = $stmt->fetchAll(PDO::FETCH_ASSOC);
             background-color: darkred;
         }
 
-        .error-message {
-            color: red;
+        .message {
             text-align: center;
-            margin-top: 10px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: green;
         }
     </style>
 </head>
@@ -100,6 +104,10 @@ $supervisors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 <div class="container">
     <h2>قائمة المشرفين</h2>
+
+    <?php if ($message): ?>
+        <p class="message"><?= htmlspecialchars($message) ?></p>
+    <?php endif; ?>
 
     <!-- عرض قائمة المشرفين -->
     <table>
@@ -114,11 +122,11 @@ $supervisors = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <tbody>
             <?php foreach ($supervisors as $supervisor) : ?>
                 <tr>
-                    <td><?php echo $supervisor['user_id']; ?></td>
-                    <td><?php echo $supervisor['name']; ?></td>
-                    <td><?php echo $supervisor['email']; ?></td>
+                    <td><?= htmlspecialchars($supervisor['user_id']); ?></td>
+                    <td><?= htmlspecialchars($supervisor['name']); ?></td>
+                    <td><?= htmlspecialchars($supervisor['email']); ?></td>
                     <td>
-                        <a href="?delete_id=<?php echo $supervisor['user_id']; ?>">
+                        <a href="?delete_id=<?= htmlspecialchars($supervisor['user_id']); ?>" onclick="return confirm('هل أنت متأكد من حذف هذا المشرف؟');">
                             <button class="delete-btn">حذف</button>
                         </a>
                     </td>

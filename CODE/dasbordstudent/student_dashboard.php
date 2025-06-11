@@ -1,22 +1,32 @@
 <?php
 session_start();
 include 'Database.php';
+include 'Notifications.php'; // ربط كلاس الإشعارات
 
-$db = new DatabaseConnection();
-$connection = $db->getConnection();  // الحصول على الاتصال بقاعدة البيانات
+try {
+    $db = new DatabaseConnection();
+    $connection = $db->getConnection();
 
-// التحقق من أن المستخدم هو طالب
-if ($_SESSION['role'] != 'student') {
-    header("Location: index.php");
-    exit();
+    // التحقق من أن المستخدم هو طالب
+    if ($_SESSION['role'] != 'student') {
+        header("Location: index.php");
+        exit();
+    }
+
+    // استعلام لجلب بيانات الطالب
+    $query = "SELECT * FROM users WHERE user_id = :user_id";
+    $stmt = $connection->prepare($query);
+    $stmt->bindParam(':user_id', $_SESSION['user_id']);
+    $stmt->execute();
+    $student = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // جلب الإشعارات من كلاس Notifications
+    $notificationObj = new Notifications($db);
+    $notifications = $notificationObj->getNotifications($_SESSION['user_id']);
+
+} catch (PDOException $e) {
+    die("حدث خطأ في قاعدة البيانات: " . $e->getMessage());
 }
-
-// استعلام لعرض معلومات الطالب
-$query = "SELECT * FROM users WHERE user_id = :user_id";
-$stmt = $connection->prepare($query);
-$stmt->bindParam(':user_id', $_SESSION['user_id']);
-$stmt->execute();
-$student = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -24,9 +34,8 @@ $student = $stmt->fetch(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الصفحة الرئيسية للطالب</title>
+    <title>لوحة تحكم الطالب</title>
     <style>
-        /* السايد بار */
         .sidebar {
             width: 250px;
             height: 100%;
@@ -56,8 +65,20 @@ $student = $stmt->fetch(PDO::FETCH_ASSOC);
             padding: 20px;
         }
 
-        h2 {
-            color: #333;
+        .notification-box {
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+        }
+
+        .notification-item {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .notification-item.unread {
+            background-color: #fffbcc;
         }
     </style>
 </head>
@@ -68,12 +89,28 @@ $student = $stmt->fetch(PDO::FETCH_ASSOC);
         <a href="student_dashboard.php">الصفحة الرئيسية</a>
         <a href="student_details.php">تفاصيل الطالب</a>
         <a href="project_details.php">تفاصيل المشروع</a>
+        <a href="dashboard_file.php">المهام</a>
     </div>
 
     <!-- المحتوى الرئيسي -->
     <div class="main-content">
-        <h2>مرحبًا، <?php echo $student['name']; ?>!</h2>
+        <h2>مرحبًا، <?php echo htmlspecialchars($student['name']); ?>!</h2>
         <p>مرحبًا بك في لوحة تحكم الطالب. يمكنك هنا إدارة التفاصيل الخاصة بك والمشاريع المسجلة لك.</p>
+
+        <!-- إشعارات الطالب -->
+        <div class="notification-box">
+            <h3>الإشعارات:</h3>
+            <?php if (count($notifications) > 0): ?>
+                <?php foreach ($notifications as $noti): ?>
+                    <div class="notification-item <?php echo $noti['is_read'] == 0 ? 'unread' : ''; ?>">
+                        <strong><?php echo htmlspecialchars($noti['message']); ?></strong><br>
+                        <small><?php echo $noti['created_at']; ?></small>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p>لا توجد إشعارات حالياً.</p>
+            <?php endif; ?>
+        </div>
     </div>
 </body>
 </html>
