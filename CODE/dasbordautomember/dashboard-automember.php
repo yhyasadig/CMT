@@ -42,6 +42,7 @@ if (isset($_SESSION['user_id'])) {
 }
 
 // جلب الإشعارات من كلاس Notifications
+<<<<<<< HEAD
 try {
     $notificationObj = new Notifications($db);
     $notifications = $notificationObj->getNotifications($_SESSION['user_id']);
@@ -49,6 +50,10 @@ try {
     $notifications = [];
     $message = "حدث خطأ أثناء جلب الإشعارات: " . htmlspecialchars($e->getMessage());
 }
+=======
+$notificationObj = new Notifications($db);
+$notifications = $notificationObj->getNotifications($_SESSION['user_id']);
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
 ?>
 
 <!DOCTYPE html>
@@ -191,7 +196,10 @@ try {
             <li><a href="dashboard_file.php">المهام</a></li>
             <li><a href="dashboard_taskmanager.php">إضافة مهام</a></li>
             <li><a href="add_report.php">إضافة تقارير</a></li>
+<<<<<<< HEAD
             <li><a href="chat_student.php">دردشة</a></li>
+=======
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
             
         </ul>
     </div>
@@ -206,8 +214,13 @@ try {
             <?php if (count($notifications) > 0): ?>
                 <?php foreach ($notifications as $noti): ?>
                     <div class="notification-item <?php echo $noti['is_read'] == 0 ? 'unread' : ''; ?>">
+<<<<<<< HEAD
                         <strong><?php echo htmlspecialchars($noti['message']); ?></strong><br>
                         <small><?php echo htmlspecialchars($noti['created_at']); ?></small>
+=======
+                        <strong><?php echo $noti['message']; ?></strong><br>
+                        <small><?php echo $noti['created_at']; ?></small>
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
                     </div>
                 <?php endforeach; ?>
             <?php else: ?>
@@ -215,11 +228,17 @@ try {
             <?php endif; ?>
         </div>
 
+<<<<<<< HEAD
         <!-- رسالة في حال لا يوجد مشروع أو أخطاء -->
         <?php if (isset($message)): ?>
             <p class="<?php echo strpos($message, 'خطأ') !== false ? 'error-message' : 'message'; ?>">
                 <?php echo htmlspecialchars($message); ?>
             </p>
+=======
+        <!-- رسالة في حال لا يوجد مشروع -->
+        <?php if (isset($message)): ?>
+            <p class="message"><?php echo $message; ?></p>
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
         <?php endif; ?>
 
     </div>

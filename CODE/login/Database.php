@@ -1,6 +1,10 @@
 <?php
 
 class DatabaseConnection {
+<<<<<<< HEAD
+=======
+    private static ?DatabaseConnection $instance = null; // الكائن الوحيد من الكلاس
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     private PDO $connection;
 
     // معلومات الاتصال
@@ -9,8 +13,13 @@ class DatabaseConnection {
     private string $username = "root";
     private string $password = "";
 
+<<<<<<< HEAD
     // المُنشئ أصبح عامًا الآن
     public function __construct() {
+=======
+    // نجعل المُنشئ private لمنع الإنشاء من الخارج
+    private function __construct() {
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
         $this->connect();
     }
 
@@ -25,6 +34,17 @@ class DatabaseConnection {
         }
     }
 
+<<<<<<< HEAD
+=======
+    // الدالة العامة للحصول على نفس الكائن (Singleton)
+    public static function getInstance(): DatabaseConnection {
+        if (self::$instance === null) {
+            self::$instance = new DatabaseConnection();
+        }
+        return self::$instance;
+    }
+
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     // للحصول على كائن الاتصال بـ PDO
     public function getConnection(): PDO {
         return $this->connection;

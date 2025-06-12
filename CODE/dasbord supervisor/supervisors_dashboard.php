@@ -11,6 +11,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'supervis') {
 require_once 'Database.php';
 require_once 'Notifications.php';
 
+<<<<<<< HEAD
 try {
     // الاتصال بقاعدة البيانات وإنشاء كائن الإشعارات
     $db = new DatabaseConnection();
@@ -23,6 +24,15 @@ try {
     error_log("خطأ في جلب الإشعارات: " . $e->getMessage());
     $notifications = [];
 }
+=======
+// الاتصال بقاعدة البيانات وإنشاء كائن الإشعارات
+$db = new DatabaseConnection();
+$notificationsObj = new Notifications($db);
+
+//  جلب الإشعارات للمستخدم الحالي (المشرف)
+$userId = $_SESSION['user_id'];
+$notifications = $notificationsObj->getNotifications($userId);
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
 ?>
 
 <!DOCTYPE html>
@@ -106,7 +116,10 @@ try {
     <a href="dashboard_taskmanager.php">إدارة المهام</a>
     <a href="supervisor_reports.php">عرض التقارير</a>
     <a href="chat_supervisor.php">دردشة</a>
+<<<<<<< HEAD
     <a href="logout.php" >تسجيل الخروج</a>
+=======
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
 </div>
 
 <!--  المحتوى الرئيسي -->

@@ -14,7 +14,10 @@ class Report {
         $this->notification = new Notifications($dbConnection);
     }
 
+<<<<<<< HEAD
     // طريقة الحصول على النسخة الوحيدة (Singleton)
+=======
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     public static function getInstance() {
         if (self::$instance === null) {
             self::$instance = new Report();
@@ -22,11 +25,14 @@ class Report {
         return self::$instance;
     }
 
+<<<<<<< HEAD
     // دالة للحصول على اتصال قاعدة البيانات من خارج الكلاس
     public function getDbConnection() {
         return $this->db;
     }
 
+=======
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     public function addReport($senderId, $receiverId, $userRole, $title, $body, $fileName = null) {
         try {
             $stmt = $this->db->prepare("INSERT INTO reports 

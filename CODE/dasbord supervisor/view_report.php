@@ -1,5 +1,6 @@
 <?php
 session_start();
+<<<<<<< HEAD
 require_once 'Report.php';
 
 // تحقق من تسجيل الدخول كمشرف
@@ -10,10 +11,24 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'supervis') {
 // التحقق من وجود report_id صحيح
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     die("تقرير غير صالح.");
+=======
+require_once 'Database.php';
+require_once 'Report.php';
+
+// ✅ تحقق من تسجيل الدخول كمشرف
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'supervis') {
+    die("⚠️ يجب تسجيل الدخول كمشرف.");
+}
+
+// ✅ التحقق من وجود report_id صحيح
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    die("⚠️ تقرير غير صالح.");
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
 }
 
 $reportId = $_GET['id'];
 
+<<<<<<< HEAD
 // الحصول على نسخة الكلاس singleton
 $report = Report::getInstance();
 
@@ -40,6 +55,28 @@ try {
     die("حدث خطأ في قاعدة البيانات: " . htmlspecialchars($e->getMessage()));
 } catch (Exception $e) {
     die("حدث خطأ غير متوقع: " . htmlspecialchars($e->getMessage()));
+=======
+$db = new DatabaseConnection();
+$conn = $db->getConnection();
+$report = new Report($conn);
+
+// ✅ جلب التقرير
+$data = $report->getReportById($reportId);
+if (!$data) {
+    die("❌ لم يتم العثور على التقرير.");
+}
+
+// ✅ التأكد من وجود حقل الحالة في نتيجة التقرير
+if (!isset($data['status'])) {
+    $data['status'] = 'قيد المراجعة'; // احتياطي لو كان السطر السابق ALTER TABLE لم يُنفذ
+}
+
+// ✅ تحديث الحالة إلى "تم الاطلاع عليه" إن لم تكن كذلك
+if ($data['status'] !== 'تم الاطلاع عليه') {
+    $update = $conn->prepare("UPDATE reports SET status = 'تم الاطلاع عليه' WHERE report_id = :id");
+    $update->execute([':id' => $reportId]);
+    $data['status'] = 'تم الاطلاع عليه';
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
 }
 ?>
 
@@ -121,7 +158,11 @@ try {
 
     <div class="field">
         <div class="label">مرسل التقرير:</div>
+<<<<<<< HEAD
         <div class="value"><?= htmlspecialchars($data['sender_name']) ?> (<?= htmlspecialchars($data['user_role'] ?? '') ?>)</div>
+=======
+        <div class="value"><?= htmlspecialchars($data['sender_name']) ?> (<?= htmlspecialchars($data['user_role']) ?>)</div>
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     </div>
 
     <div class="field">
@@ -142,12 +183,20 @@ try {
     <?php if (!empty($data['file_name'])): ?>
         <div class="field">
             <div class="label">الملف المرفق:</div>
+<<<<<<< HEAD
             <a href="uploads/reports/<?= htmlspecialchars($data['file_name']) ?>" class="download-btn" target="_blank">تحميل الملف</a>
+=======
+            <a href="uploads/reports/<?= $data['file_name'] ?>" class="download-btn" target="_blank">📥 تحميل الملف</a>
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
         </div>
     <?php endif; ?>
 
     <div class="back">
+<<<<<<< HEAD
         <a href="supervisor_reports.php">الرجوع إلى قائمة التقارير</a>
+=======
+        <a href="supervisor_reports.php">← الرجوع إلى قائمة التقارير</a>
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     </div>
 </div>
 

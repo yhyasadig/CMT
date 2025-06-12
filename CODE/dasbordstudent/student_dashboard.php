@@ -3,9 +3,14 @@ session_start();
 include 'Database.php';
 include 'Notifications.php'; // ربط كلاس الإشعارات
 
+<<<<<<< HEAD
 try {
     $db = new DatabaseConnection();
     $connection = $db->getConnection();
+=======
+$db = new DatabaseConnection();
+$connection = $db->getConnection();
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
 
     // التحقق من أن المستخدم هو طالب
     if ($_SESSION['role'] != 'student') {
@@ -27,6 +32,20 @@ try {
 } catch (PDOException $e) {
     die("حدث خطأ في قاعدة البيانات: " . $e->getMessage());
 }
+<<<<<<< HEAD
+=======
+
+// استعلام لجلب بيانات الطالب
+$query = "SELECT * FROM users WHERE user_id = :user_id";
+$stmt = $connection->prepare($query);
+$stmt->bindParam(':user_id', $_SESSION['user_id']);
+$stmt->execute();
+$student = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// جلب الإشعارات من كلاس Notifications
+$notificationObj = new Notifications($db);
+$notifications = $notificationObj->getNotifications($_SESSION['user_id']);
+>>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
 ?>
 
 <!DOCTYPE html>
