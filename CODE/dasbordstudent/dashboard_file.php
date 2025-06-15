@@ -1,12 +1,13 @@
 <?php
 session_start();  // يجب أن تكون هذه السطر في بداية الملف
 
-// تضمين الاتصال بقاعدة البيانات وكلاسات FileManager و TaskManager و Comment
+// تضمين الاتصال بقاعدة البيانات وكلاسات FileManager و TaskManager و Comment و Rating
 include 'Database.php';
 include 'FileManager.php';
 include 'TaskManager.php';
 include 'Comment.php'; // تضمين كلاس التعليقات
-include 'Rating.php';  // تضمين كلاس التقييم
+include 'Rating.php';  // تضمين كلاس التقييم (تأكد من أن الملف Rating.php موجود في نفس المجلد أو المسار الصحيح)
+
 
 // التحقق إذا كان المستخدم مسجلاً دخوله
 if (!isset($_SESSION['user_id'])) {
@@ -16,18 +17,12 @@ if (!isset($_SESSION['user_id'])) {
 
 // جلب projectId من الجلسة (يجب تخزينه عند تسجيل دخول المستخدم أو تحديد المشروع المعين له)
 if (!isset($_SESSION['project_id'])) {
-<<<<<<< HEAD
-    header("Location: student_dashboard.php");  // توجيه المستخدم الي الفحة التي قبلها اذا لم يكن هناك مشروع 
-=======
-    header("Location: select_project.php");  // توجيه المستخدم لاختيار مشروع إذا لم يكن projectId موجودًا في الجلسة
-    exit();
->>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
+    header("Location: student_dashboard.php");  // توجيه المستخدم الي الصفحة السابقة إذا لم يكن هناك مشروع 
 }
 
 $projectId = $_SESSION['project_id'];  // الحصول على projectId من الجلسة
 
 // إنشاء كائن من الاتصال بقاعدة البيانات
-<<<<<<< HEAD
 try {
     $db = new DatabaseConnection();
     $fileManager = new FileManager($db->getConnection());
@@ -60,37 +55,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['task_file'])) {
         }
     } catch (Exception $e) {
         echo "<div class='error-message'>خطأ أثناء رفع الملف: " . htmlspecialchars($e->getMessage()) . "</div>";
-=======
-$db = new DatabaseConnection();
-$fileManager = new FileManager($db->getConnection());
-$taskManager = new TaskManager($db->getConnection());
-
-// التحقق إذا تم إرسال الملف عبر POST
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['task_file'])) {
-    $taskId = $_POST['task_id'];  // معرف المهمة التي يتم رفع الملف لها
-    $file = $_FILES['task_file'];  // ملف المهمة
-    $uploadedBy = $_SESSION['user_id'];  // معرف المستخدم الذي رفع الملف (يجب أن يكون موجود في الجلسة)
-
-    // التحقق إذا كان المستخدم هو من يرفع الملف للمهمة الخاصة به
-    $task = $taskManager->getTaskById($taskId);  // جلب المهمة باستخدام ID المهمة
-    if ($task && $task['assigned_to'] == $uploadedBy) {
-        // رفع الملف عبر كلاس FileManager
-        $result = $fileManager->uploadTaskFile($taskId, $file, $uploadedBy);
-
-        if ($result === true) {
-            echo "<div class='message'>تم رفع الملف بنجاح!</div>";
-        } else {
-            echo "<div class='error-message'>حدث خطأ في رفع الملف: " . $result . "</div>";
-        }
-    } else {
-        echo "<div class='error-message'>لا يمكنك رفع الملف لمهمة لا تخصك.</div>";
->>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     }
 }
 
 // التحقق إذا تم إرسال تعليق عبر POST
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['comment_text'])) {
-<<<<<<< HEAD
     try {
         $taskId = $_POST['task_id'];  // معرف المهمة
         $commentText = $_POST['comment_text'];  // نص التعليق
@@ -113,26 +82,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['comment_text'])) {
         }
     } catch (Exception $e) {
         echo "<div class='error-message'>خطأ أثناء إضافة التعليق: " . htmlspecialchars($e->getMessage()) . "</div>";
-=======
-    $taskId = $_POST['task_id'];  // معرف المهمة
-    $commentText = $_POST['comment_text'];  // نص التعليق
-    $userId = $_SESSION['user_id'];  // معرف المستخدم الذي يضيف التعليق
-
-    // التحقق إذا كان المستخدم هو المعني بالمهمة
-    $task = $taskManager->getTaskById($taskId);  // جلب المهمة باستخدام ID المهمة
-    if ($task && $task['assigned_to'] == $userId) {
-        // إنشاء كائن من كلاس Comment
-        $comment = new Comment(null, $taskId, $userId, $commentText);
-
-        // إضافة التعليق إلى قاعدة البيانات
-        if ($comment->saveToDatabase($db)) {
-            echo "<div class='message'>تم إضافة التعليق بنجاح!</div>";
-        } else {
-            echo "<div class='error-message'>حدث خطأ في إضافة التعليق.</div>";
-        }
-    } else {
-        echo "<div class='error-message'>لا يمكنك إضافة تعليق لمهمة لا تخصك.</div>";
->>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
     }
 }
 
@@ -145,7 +94,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['search_term'])) {
 // جلب المهام الخاصة بالمشروع بناءً على project_id فقط
 $userId = $_SESSION['user_id'];  // معرف المستخدم الذي تم تسجيل دخوله
 
-<<<<<<< HEAD
 try {
     // جلب المهام الخاصة بالمشروع أو بناءً على البحث
     if ($searchTerm != '') {
@@ -156,13 +104,6 @@ try {
 } catch (Exception $e) {
     echo "<div class='error-message'>حدث خطأ في جلب المهام: " . htmlspecialchars($e->getMessage()) . "</div>";
     $tasks = [];
-=======
-// جلب المهام الخاصة بالمشروع أو بناءً على البحث
-if ($searchTerm != '') {
-    $tasks = $taskManager->searchTasksByProjectAndTerm($projectId, $searchTerm);  // جلب المهام التي تطابق البحث
-} else {
-    $tasks = $taskManager->getTasksByProject($projectId);  // جلب المهام الخاصة بالمشروع فقط
->>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
 }
 ?>
 
@@ -328,7 +269,6 @@ if ($searchTerm != '') {
                 <!-- عرض التعليقات المرتبطة بالمهمة -->
                 <div class="comment-section">
                     <?php
-<<<<<<< HEAD
                     try {
                         // استرجاع التعليقات المتعلقة بالمهمة
                         $comments = $taskManager->getCommentsByTask($task['task_id']);
@@ -345,24 +285,11 @@ if ($searchTerm != '') {
                         echo "<div class='error-message'>خطأ في جلب التعليقات: " . htmlspecialchars($e->getMessage()) . "</div>";
                     }
                     ?>
-=======
-                    // استرجاع التعليقات المتعلقة بالمهمة
-                    $comments = $taskManager->getCommentsByTask($task['task_id']);
-                    foreach ($comments as $comment):
-                    ?>
-                        <div class="comment">
-                            <div class="comment-user"><?php echo "المستخدم: " . $comment['user_name']; ?></div>
-                            <div class="comment-text"><?php echo $comment['comment_text']; ?></div>
-                            <div class="comment-timestamp"><?php echo $comment['timestamp']; ?></div>
-                        </div>
-                    <?php endforeach; ?>
->>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
                 </div>
             </td>
             <td>
                 <!-- عرض التقييمات المرتبطة بالمهمة -->
                 <?php
-<<<<<<< HEAD
                 try {
                     // استرجاع التقييمات المتعلقة بالمهمة
                     $ratings = Rating::getRatingsByTaskId($db->getConnection(), $task['task_id']);
@@ -381,20 +308,6 @@ if ($searchTerm != '') {
                     echo "<div class='error-message'>خطأ في جلب التقييمات: " . htmlspecialchars($e->getMessage()) . "</div>";
                 }
                 ?>
-=======
-                // استرجاع التقييمات المتعلقة بالمهمة
-                $ratings = Rating::getRatingsByTaskId($db->getConnection(), $task['task_id']);
-                foreach ($ratings as $rating):
-                    // استرجاع اسم المشرف
-                    $supervisorName = Rating::getSupervisorNameByTaskId($db->getConnection(), $task['task_id']);
-                ?>
-                    <div class="comment">
-                        <div class="comment-user"><?php echo "المشرف: " . htmlspecialchars($supervisorName); ?></div>
-                        <div class="comment-text">التقييم: <?php echo $rating['score']; ?>/100</div>
-                        <div class="comment-timestamp"><?php echo $rating['timestamp']; ?></div>
-                    </div>
-                <?php endforeach; ?>
->>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
             </td>
         </tr>
         <?php endforeach; ?>
