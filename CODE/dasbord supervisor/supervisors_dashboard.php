@@ -1,38 +1,29 @@
 <?php
 session_start();
 
-//  التأكد من أن المستخدم مشرف
+// التأكد من أن المستخدم هو مشرف
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'supervis') {
     header("Location: index.php");
     exit();
 }
 
-//  استدعاء الملفات
+// استدعاء الملفات
 require_once 'Database.php';
-require_once 'Notifications.php';
+require_once 'NotificationManager.php'; // تضمين كلاس NotificationManager
 
-<<<<<<< HEAD
 try {
     // الاتصال بقاعدة البيانات وإنشاء كائن الإشعارات
     $db = new DatabaseConnection();
-    $notificationsObj = new Notifications($db);
+    $notificationManager = new NotificationManager($db);
 
-    //  جلب الإشعارات للمستخدم الحالي (المشرف)
+    // جلب الإشعارات للمستخدم (المشرف)
     $userId = $_SESSION['user_id'];
-    $notifications = $notificationsObj->getNotifications($userId);
+    $notifications = $notificationManager->getNotifications($userId);
+
 } catch (Exception $e) {
     error_log("خطأ في جلب الإشعارات: " . $e->getMessage());
     $notifications = [];
 }
-=======
-// الاتصال بقاعدة البيانات وإنشاء كائن الإشعارات
-$db = new DatabaseConnection();
-$notificationsObj = new Notifications($db);
-
-//  جلب الإشعارات للمستخدم الحالي (المشرف)
-$userId = $_SESSION['user_id'];
-$notifications = $notificationsObj->getNotifications($userId);
->>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
 ?>
 
 <!DOCTYPE html>
@@ -108,7 +99,7 @@ $notifications = $notificationsObj->getNotifications($userId);
 </head>
 <body>
 
-<!--  الشريط الجانبي -->
+<!-- الشريط الجانبي -->
 <div class="sidebar">
     <h2>لوحة تحكم المشرف</h2>
     <a href="add_project.php">إضافة مشروع</a>
@@ -116,28 +107,44 @@ $notifications = $notificationsObj->getNotifications($userId);
     <a href="dashboard_taskmanager.php">إدارة المهام</a>
     <a href="supervisor_reports.php">عرض التقارير</a>
     <a href="chat_supervisor.php">دردشة</a>
-<<<<<<< HEAD
-    <a href="logout.php" >تسجيل الخروج</a>
-=======
->>>>>>> 2c437069192c41dc67c3eef3ba98c09f930e22d9
+    <a href="logout.php">تسجيل الخروج</a>
 </div>
 
-<!--  المحتوى الرئيسي -->
+<!-- المحتوى الرئيسي -->
 <div class="main-content">
     <h1>مرحبًا بك - إشعاراتك</h1>
 
     <div class="notification-box">
         <h3>الإشعارات:</h3>
         <?php
+        // التحقق إذا كانت هناك إشعارات أم لا
         if (count($notifications) > 0) {
+            // عرض الإشعارات
             foreach ($notifications as $notification) {
+                // تحديد إذا كانت الإشعار غير مقروء
                 echo '<div class="notification-item ' . ($notification['is_read'] == 0 ? 'unread' : '') . '">';
                 echo '<strong>' . htmlspecialchars($notification['message']) . '</strong><br>';
                 echo '<small>' . $notification['created_at'] . '</small>';
+
+                // التحقق إذا كان هناك اسم المشروع
                 if (!empty($notification['project_name'])) {
                     echo '<br><small>مشروع: ' . htmlspecialchars($notification['project_name']) . '</small>';
                 }
-                echo '<br><small>المرسل: ' . htmlspecialchars($notification['sender_name']) . '</small>';
+
+                // التحقق من وجود مرسل الإشعار باستخدام user_id
+                if (isset($notification['user_id'])) {
+                    $userQuery = "SELECT name FROM users WHERE user_id = :user_id";
+                    $stmt = $db->getConnection()->prepare($userQuery);
+                    $stmt->bindParam(':user_id', $notification['user_id']);
+                    $stmt->execute();
+                    $sender = $stmt->fetch(PDO::FETCH_ASSOC);
+                    $senderName = $sender ? htmlspecialchars($sender['name']) : 'المرسل غير معروف';
+
+                    echo '<br><small>المرسل: ' . $senderName . '</small>';
+                } else {
+                    echo '<br><small>المرسل غير معروف</small>';
+                }
+
                 echo '</div>';
             }
         } else {
